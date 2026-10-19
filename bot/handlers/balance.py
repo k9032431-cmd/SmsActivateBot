@@ -16,6 +16,7 @@ from ..cryptopay import cryptopay
 from ..yoomoney import CARD as YM_CARD
 from ..yoomoney import WALLET as YM_WALLET
 from ..yoomoney import yoomoney
+from ..emoji import e
 from ..i18n import fmt_money, t
 from ..keyboards import BLUE, GREEN, btn, grid, kb
 from .start import home_btn
@@ -175,7 +176,7 @@ async def create_payment(bot: Bot, user_id: int, lang, method: str, amount_rub: 
     if method == "stars":
         stars = max(1, math.ceil(amount_rub / await catalog.star_rub()))
         prices = [LabeledPrice(label=fmt_money(amount), amount=stars)]
-        currency, token, pay_text = "XTR", "", f"{t(lang, 'btn_pay')} {stars} ⭐"
+        currency, token, pay_text = "XTR", "", f"{t(lang, 'btn_pay')} · {stars} Stars"
     else:
         prices = [LabeledPrice(label=fmt_money(amount), amount=amount)]
         currency, token, pay_text = "RUB", config.payment_provider_token, f"{t(lang, 'btn_pay')} {fmt_money(amount)}"
@@ -218,7 +219,7 @@ async def notify_paid(bot: Bot, payment, lang):
                            reply_markup=kb(btn(t(lang, "btn_buy"), "buy", GREEN, cb="buy"), home_btn(lang)))
     for admin in config.admin_ids:
         try:
-            await bot.send_message(admin, f"💰 Пополнение {fmt_money(payment['amount'])} · {payment['method']} · "
+            await bot.send_message(admin, f"{e('money')} Пополнение {fmt_money(payment['amount'])} · {payment['method']} · "
                                           f"<code>{payment['user_id']}</code>")
         except Exception:
             pass

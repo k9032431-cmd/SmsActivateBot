@@ -34,6 +34,7 @@ HELP = (
     "/delbanner — вернуть баннер, который рисует бот\n"
     "\n<b>Премиум-эмодзи</b>\n"
     "/emojis — все эмодзи бота и их имена\n"
+    "/emojiwizard — мастер: бот по очереди спрашивает премиум-эмодзи для каждого места\n"
     "/emojipack <code>ссылка</code> — взять эмодзи из пака (t.me/addemoji/…), подбираются автоматически\n"
     "/setemoji <code>имя</code> <i>эмодзи</i> — поставить один; можно списком, по строке на каждый:\n"
     "<code>/setemoji buy</code> 🛒\n<code>wallet</code> 💰\n"
@@ -113,6 +114,7 @@ def emojis_text() -> str:
         lines.append(f"{mark} {emoji.e(name)} <code>{name}</code>")
     lines.append("\n⭐ — стоит премиум-эмодзи.\n"
                  "Быстро: <code>/emojipack ссылка_на_пак</code>\n"
+                 "По шагам: /emojiwizard\n"
                  "Вручную: <code>/setemoji buy</code> + премиум-эмодзи")
     return "\n".join(lines)
 
@@ -167,37 +169,125 @@ async def cmd_setemoji(message: Message):
             done.append(f"{emoji.e(name)} <code>{name}</code>")
         else:
             unknown.append(escape(name))
-    text = "✅ Установлено:\n" + "\n".join(done) if done else "Ничего не установлено."
+    text = f"{emoji.e('ok')} Установлено:\n" + "\n".join(done) if done else "Ничего не установлено."
     if unknown:
-        text += "\n\n⚠️ Неизвестные имена: " + ", ".join(unknown) + " (список: /emojis)"
+        text += f"\n\n{emoji.e('warning')} Неизвестные имена: " + ", ".join(unknown) + " (список: /emojis)"
     await message.answer(text)
 
 
 @router.message(Command("emojipack"))
 async def cmd_emojipack(message: Message, command: CommandObject, bot: Bot):
-    """Берёт эмодзи из пака и ставит их тем местам бота, где обычный эмодзи совпадает."""
-    name = (command.args or "").strip().rstrip("/").split("/")[-1]
-    if not name:
-        return await message.answer("Пример: <code>/emojipack https://t.me/addemoji/НазваниеПака</code>")
-    try:
-        sticker_set = await bot.get_sticker_set(name)
-    except Exception as exc:
-        return await message.answer(f"Не удалось открыть пак: {escape(str(exc))}")
+    """Берёт эмодзи из одного или нескольких паков: сначала точные совпадения, потом похожие.
+    Уже поставленные эмодзи не трогает (кроме «/emojipack all ссылка»)."""
+    args = (command.args or "").split()
+    overwrite = bool(args) and args[0] == "all"
+    links = args[1:] if overwrite else args
+    if not links:
+        return await message.answer(
+            "Пример: <code>/emojipack https://t.me/addemoji/НазваниеПака</code>\n"
+            "Можно сразу несколько ссылок через пробел. Чтобы заменить уже поставленные — "
+            "<code>/emojipack all ссылка</code>")
+    targets = list(emoji.FALLBACK) if overwrite else emoji.missing()
     assigned: dict[str, str] = {}
-    for sticker in sticker_set.stickers:
-        if not sticker.custom_emoji_id or not sticker.emoji:
+    report = []
+    for link in links:
+        name = link.strip().rstrip("/").split("/")[-1]
+        try:
+            sticker_set = await bot.get_sticker_set(name)
+        except Exception as exc:
+            report.append(f"{emoji.e('warning')} {escape(name)}: {escape(str(exc))}")
             continue
-        for target in emoji.match_names(sticker.emoji):
-            if target not in assigned:
-                assigned[target] = sticker.custom_emoji_id
+        stickers = [st for st in sticker_set.stickers if st.custom_emoji_id and st.emoji]
+        used = set(assigned.values())
+        before = len(assigned)
+        for matcher in (emoji.match_names, emoji.similar_names):
+            for st in stickers:
+                if st.custom_emoji_id in used:
+                    continue
+                for target in matcher(st.emoji):
+                    if target in targets and target not in assigned:
+                        assigned[target] = st.custom_emoji_id
+                        used.add(st.custom_emoji_id)
+                        break
+        report.append(f"{emoji.e('ok')} {escape(sticker_set.title)}: +{len(assigned) - before}")
     for target, custom_id in assigned.items():
         await emoji.set_id(target, custom_id)
-    if not assigned:
-        return await message.answer("В этом паке не нашлось подходящих эмодзи. Попробуйте другой пак "
-                                    "или поставьте вручную через /setemoji.")
-    shown = " ".join(emoji.e(n) for n in assigned)
-    await message.answer(f"✅ Из пака <b>{escape(sticker_set.title)}</b> поставлено {len(assigned)} эмодзи:\n"
-                         f"{shown}\n\nОстальные можно поставить вручную — смотрите /emojis")
+    left = len(emoji.missing())
+    text = "\n".join(report)
+    if assigned:
+        text += "\n\n" + " ".join(emoji.e(n) for n in assigned)
+    text += (f"\n\nОсталось без премиум-эмодзи: <b>{left}</b>. "
+             "Добавьте ещё пак или заполните остальные: /emojiwizard" if left else
+             "\n\nВсе эмодзи бота теперь премиум!")
+    await message.answer(text)
+
+
+class EmojiWizard(StatesGroup):
+    waiting = State()
+
+
+def _wizard_prompt(queue: list[str], total: int) -> tuple[str, object]:
+    name = queue[0]
+    done = total - len(queue)
+    text = (f"{emoji.e('sparkle')} <b>Премиум-эмодзи · {done + 1}/{total}</b>\n\n"
+            f"Где: <b>{emoji.WHERE.get(name, name)}</b>\n"
+            f"Сейчас: {emoji.e(name)}  <code>{name}</code>\n\n"
+            "Отправьте премиум-эмодзи для этого места.\n"
+            "Можно отправить сразу несколько — они встанут по порядку в следующие места.")
+    return text, kb([btn("Пропустить", "next", BLUE, cb="ew:skip"), btn("Готово", "ok", GREEN, cb="ew:stop")])
+
+
+@router.message(Command("emojiwizard"))
+async def cmd_emojiwizard(message: Message, command: CommandObject, state: FSMContext):
+    queue = list(emoji.FALLBACK) if (command.args or "").strip() == "all" else emoji.missing()
+    # Сначала кнопки главного меню и оплаты — их видят чаще всего.
+    first = ["buy", "user", "topup", "orders", "support", "back", "home", "card", "wallet", "crypto",
+             "diamond", "star", "wave", "ok"]
+    queue.sort(key=lambda n: first.index(n) if n in first else len(first))
+    if not queue:
+        return await message.answer(f"{emoji.e('ok')} Все эмодзи уже премиум. Заменить заново: "
+                                    "<code>/emojiwizard all</code>")
+    await state.set_state(EmojiWizard.waiting)
+    await state.update_data(queue=queue, total=len(queue))
+    text, markup = _wizard_prompt(queue, len(queue))
+    await message.answer(text, reply_markup=markup)
+
+
+@router.message(EmojiWizard.waiting, ~F.text.startswith("/"))
+async def wizard_input(message: Message, state: FSMContext):
+    data = await state.get_data()
+    queue, total = data["queue"], data["total"]
+    ids = [ent.custom_emoji_id for ent in (message.entities or []) if ent.type == "custom_emoji"]
+    if not ids:
+        return await message.answer("Это обычный эмодзи. Нужен премиум-эмодзи из панели эмодзи "
+                                    "(требуется Telegram Premium).")
+    shown = []
+    while ids and queue:
+        name = queue.pop(0)
+        await emoji.set_id(name, ids.pop(0))
+        shown.append(f"{emoji.e(name)} {emoji.WHERE.get(name, name)}")
+    await message.answer(f"{emoji.e('ok')} " + "\n".join(shown))
+    if not queue:
+        await state.clear()
+        return await message.answer(f"{emoji.e('sparkle')} Готово! Откройте /start и посмотрите.")
+    await state.update_data(queue=queue)
+    text, markup = _wizard_prompt(queue, total)
+    await message.answer(text, reply_markup=markup)
+
+
+@router.callback_query(EmojiWizard.waiting, F.data.startswith("ew:"))
+async def wizard_button(call: CallbackQuery, state: FSMContext):
+    await call.answer()
+    data = await state.get_data()
+    queue = data["queue"]
+    if call.data == "ew:skip" and len(queue) > 1:
+        queue = queue[1:]
+        await state.update_data(queue=queue)
+        text, markup = _wizard_prompt(queue, data["total"])
+        return await show(call, text, markup)
+    await state.clear()
+    await show(call, f"{emoji.e('ok')} Мастер закрыт. Без премиум-эмодзи осталось: {len(emoji.missing())}. "
+                     "Продолжить: /emojiwizard")
 
 
 @router.message(Command("setbanner"))
@@ -212,14 +302,14 @@ async def cmd_setbanner(message: Message):
         kind, file_id = "photo", source.photo[-1].file_id
     await db.set_setting("banner_type", kind)
     await db.set_setting("banner_file_id", file_id)
-    await message.answer("✅ Баннер обновлён — откройте /start")
+    await message.answer(f"{emoji.e('ok')} Баннер обновлён — откройте /start")
 
 
 @router.message(Command("delbanner"))
 async def cmd_delbanner(message: Message):
     await db.del_setting("banner_type")
     await db.del_setting("banner_file_id")
-    await message.answer("✅ Вернул баннер, который рисует бот — откройте /start")
+    await message.answer(f"{emoji.e('ok')} Вернул баннер, который рисует бот — откройте /start")
 
 
 @router.message(Command("delemoji"))
@@ -228,11 +318,11 @@ async def cmd_delemoji(message: Message, command: CommandObject):
     if name == "all":
         for n in emoji.FALLBACK:
             await emoji.set_id(n, None)
-        return await message.answer("✅ Все эмодзи сброшены на обычные")
+        return await message.answer(f"{emoji.e('ok')} Все эмодзи сброшены на обычные")
     if name not in emoji.FALLBACK:
         return await message.answer("Укажите имя из /emojis")
     await emoji.set_id(name, None)
-    await message.answer(f"✅ <code>{name}</code> → {emoji.e(name)}")
+    await message.answer(f"{emoji.e('ok')} <code>{name}</code> → {emoji.e(name)}")
 
 
 async def _set_number(message: Message, command: CommandObject, key: str, title: str):
@@ -242,7 +332,7 @@ async def _set_number(message: Message, command: CommandObject, key: str, title:
     except (ValueError, AssertionError):
         return await message.answer(f"Укажите число, например: <code>/{command.command} 2</code>")
     await db.set_setting(key, str(value))
-    await message.answer(f"✅ {title}: <b>{value:g}</b>")
+    await message.answer(f"{emoji.e('ok')} {title}: <b>{value:g}</b>")
 
 
 @router.message(Command("setmarkup"))
@@ -278,7 +368,7 @@ async def cmd_user(message: Message, command: CommandObject):
         f"{'@' + user['username'] if user['username'] else ''}\n"
         f"ID: <code>{user['id']}</code> · язык: {user['lang']}\n"
         f"Баланс: <b>{fmt_money(user['balance'])}</b>\n"
-        f"Статус: {'🚫 забанен' if user['banned'] else '✅ активен'}\n"
+        f"Статус: {emoji.e('cancel') + ' забанен' if user['banned'] else emoji.e('ok') + ' активен'}\n"
         f"Последние заказы: " + (", ".join(f"{o['service']} {fmt_money(o['price'])} ({o['status']})"
                                           for o in orders) or "нет"),
         reply_markup=kb([
@@ -300,7 +390,7 @@ async def cmd_ban(message: Message, command: CommandObject):
     user_id = _parse_id(command)
     if not user_id or not await db.set_banned(user_id, command.command == "ban"):
         return await message.answer("Пользователь не найден")
-    await message.answer("✅ Готово")
+    await message.answer(f"{emoji.e('ok')} Готово")
 
 
 @router.message(Command("addbal"))
@@ -313,7 +403,7 @@ async def cmd_addbal(message: Message, command: CommandObject, bot: Bot):
     if not await db.add_balance(user_id, kop):
         return await message.answer("Пользователь не найден")
     user = await db.get_user(user_id)
-    await message.answer(f"✅ Баланс <code>{user_id}</code>: <b>{fmt_money(user['balance'])}</b>")
+    await message.answer(f"{emoji.e('ok')} Баланс <code>{user_id}</code>: <b>{fmt_money(user['balance'])}</b>")
 
 
 @router.callback_query(F.data == "adm:bc")
@@ -329,7 +419,7 @@ async def cb_broadcast(call: CallbackQuery, state: FSMContext):
 async def do_broadcast(message: Message, state: FSMContext, bot: Bot):
     await state.clear()
     user_ids = await db.all_user_ids()
-    status = await message.answer(f"⏳ Рассылка на {len(user_ids)} пользователей…")
+    status = await message.answer(f"{emoji.e('wait')} Рассылка на {len(user_ids)} пользователей…")
     sent = 0
     for user_id in user_ids:
         try:
@@ -338,4 +428,4 @@ async def do_broadcast(message: Message, state: FSMContext, bot: Bot):
         except Exception:
             pass
         await asyncio.sleep(0.05)
-    await status.edit_text(f"✅ Рассылка завершена: {sent}/{len(user_ids)}")
+    await status.edit_text(f"{emoji.e('ok')} Рассылка завершена: {sent}/{len(user_ids)}")

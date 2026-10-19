@@ -182,7 +182,7 @@ async def purchase(call: CallbackQuery, bot: Bot, lang):
         if code == "NO_BALANCE":
             for admin in config.admin_ids:
                 try:
-                    await bot.send_message(admin, "⚠️ На балансе Grizzly SMS закончились деньги — "
+                    await bot.send_message(admin, f"{emoji.e('warning')} На балансе Grizzly SMS закончились деньги — "
                                                   "клиенты не могут купить номера. Пополните аккаунт.")
                 except Exception:
                     pass
