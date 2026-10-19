@@ -18,17 +18,57 @@ Telegram-бот для продажи виртуальных номеров по
 - Админ-панель: статистика и прибыль, баланс Grizzly, рассылка, бан и разбан, начисление баланса,
   смена наценки и курсов, настройка эмодзи.
 
-## Установка
+## Установка одной командой
+
+Подходит сервер (VPS) с Ubuntu 22.04+ или Debian 12+. Выполните:
 
 ```bash
-git clone <repo> && cd SmsActivateBot
+curl -fsSL https://raw.githubusercontent.com/k9032431-cmd/SmsActivateBot/HEAD/install.sh | sudo bash
+```
+
+Скрипт сам:
+
+- поставит Python и git;
+- скачает бота в `/opt/smsbot`;
+- задаст вопросы о токенах и ключах;
+- включит автозапуск, чтобы бот работал 24/7 и после перезагрузки сервера.
+
+Если репозиторий приватный, добавьте токен GitHub:
+
+```bash
+curl -fsSL -H "Authorization: token ВАШ_ТОКЕН" \
+  https://raw.githubusercontent.com/k9032431-cmd/SmsActivateBot/HEAD/install.sh \
+  | sudo GITHUB_TOKEN=ВАШ_ТОКЕН bash
+```
+
+## Обновление одной командой
+
+```bash
+sudo smsbot update
+```
+
+Команда скачает новую версию, обновит зависимости и перезапустит бота. Настройки (`.env`)
+и база данных с балансами клиентов сохраняются. Перед обновлением база копируется в `bot.db.bak`.
+
+## Управление
+
+| Команда | Что делает |
+|---|---|
+| `sudo smsbot update` | обновить до последней версии |
+| `sudo smsbot config` | изменить настройки (`.env`) и перезапустить |
+| `sudo smsbot restart` / `start` / `stop` | перезапустить, запустить или остановить |
+| `sudo smsbot status` | статус |
+| `sudo smsbot logs` | логи в реальном времени |
+| `sudo smsbot backup` | резервная копия базы в `/opt/smsbot/backups` |
+
+### Ручной запуск (для разработки)
+
+```bash
 python3 -m venv venv && . venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env   # заполните файл
 python -m bot
 ```
-
-Нужен Python 3.10 или новее.
 
 ### Что заполнить в `.env`
 
@@ -64,24 +104,3 @@ python -m bot
 `/setmarkup 2` — наценка
 `/setstar 1.8` — курс звезды
 `/setusd 95` — курс доллара (нужен, если баланс Grizzly в $)
-
-## Запуск 24/7 (systemd)
-
-```ini
-# /etc/systemd/system/smsbot.service
-[Unit]
-Description=SMS bot
-After=network.target
-
-[Service]
-WorkingDirectory=/opt/SmsActivateBot
-ExecStart=/opt/SmsActivateBot/venv/bin/python -m bot
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-```bash
-systemctl enable --now smsbot
-```
