@@ -1,7 +1,6 @@
 """Тексты бота на трёх языках.
 
 [[имя]] — место для (премиум-)эмодзи из emoji.py.
-Рамки сделаны цитатными блоками Telegram (<blockquote>), они выглядят как карточки.
 """
 import re
 
@@ -22,35 +21,27 @@ TEXTS: dict[str, dict[str, str]] = {
         "tk": "[[ok]] Dil üýtgedildi",
     },
     "main": {
-        "ru": "[[logo]] <b>{bot_name}</b> [[sparkle]]\n"
-              "<i>Виртуальные номера для приёма СМС</i>\n\n"
-              "<blockquote>[[user]] <b>{name}</b>\n"
-              "[[id]] ID · <code>{user_id}</code>\n"
-              "[[wallet]] Баланс · <b>{balance}</b></blockquote>\n\n"
-              "<blockquote>[[lightning]] Номер выдаётся моментально\n"
-              "[[shield]] Нет СМС — деньги вернутся\n"
-              "[[globe]] {countries}+ стран · {services}+ сервисов</blockquote>\n\n"
-              "[[down]] <b>Выберите действие</b>",
-        "en": "[[logo]] <b>{bot_name}</b> [[sparkle]]\n"
-              "<i>Virtual numbers to receive SMS</i>\n\n"
-              "<blockquote>[[user]] <b>{name}</b>\n"
-              "[[id]] ID · <code>{user_id}</code>\n"
-              "[[wallet]] Balance · <b>{balance}</b></blockquote>\n\n"
-              "<blockquote>[[lightning]] Instant number delivery\n"
-              "[[shield]] No SMS — full refund\n"
-              "[[globe]] {countries}+ countries · {services}+ services</blockquote>\n\n"
-              "[[down]] <b>Choose an action</b>",
-        "tk": "[[logo]] <b>{bot_name}</b> [[sparkle]]\n"
-              "<i>SMS kabul etmek üçin wirtual belgiler</i>\n\n"
-              "<blockquote>[[user]] <b>{name}</b>\n"
-              "[[id]] ID · <code>{user_id}</code>\n"
-              "[[wallet]] Balans · <b>{balance}</b></blockquote>\n\n"
-              "<blockquote>[[lightning]] Belgi derrew berilýär\n"
-              "[[shield]] SMS gelmese — pul yzyna gaýtarylýar\n"
-              "[[globe]] {countries}+ ýurt · {services}+ hyzmat</blockquote>\n\n"
-              "[[down]] <b>Hereketi saýlaň</b>",
+        "ru": "[[wave]] Приветствую, <b><i>{name}</i></b>\n\n"
+              "<b>{bot_name}</b> — виртуальные номера для приёма СМС на любые сервисы.\n\n"
+              "[[ok]] Моментальная выдача\n"
+              "[[ok]] Возврат, если СМС не пришло\n"
+              "[[ok]] {countries}+ стран и {services}+ сервисов\n\n"
+              "Выберите нужный раздел ниже.",
+        "en": "[[wave]] Welcome, <b><i>{name}</i></b>\n\n"
+              "<b>{bot_name}</b> — virtual numbers to receive SMS for any service.\n\n"
+              "[[ok]] Instant delivery\n"
+              "[[ok]] Refund if no SMS arrives\n"
+              "[[ok]] {countries}+ countries and {services}+ services\n\n"
+              "Choose a section below.",
+        "tk": "[[wave]] Hoş geldiňiz, <b><i>{name}</i></b>\n\n"
+              "<b>{bot_name}</b> — islendik hyzmat üçin SMS kabul edýän wirtual belgiler.\n\n"
+              "[[ok]] Derrew berilýär\n"
+              "[[ok]] SMS gelmese, pul yzyna gaýtarylýar\n"
+              "[[ok]] {countries}+ ýurt we {services}+ hyzmat\n\n"
+              "Aşakdan bölümi saýlaň.",
     },
     "btn_buy": {"ru": "Купить номер", "en": "Buy number", "tk": "Belgi satyn al"},
+    "btn_profile": {"ru": "Профиль", "en": "Profile", "tk": "Profil"},
     "btn_topup": {"ru": "Пополнить", "en": "Top up", "tk": "Doldur"},
     "btn_orders": {"ru": "Мои номера", "en": "My numbers", "tk": "Belgilerim"},
     "btn_lang": {"ru": "Язык", "en": "Language", "tk": "Dil"},
@@ -61,102 +52,96 @@ TEXTS: dict[str, dict[str, str]] = {
     "btn_search": {"ru": "Поиск", "en": "Search", "tk": "Gözleg"},
     "btn_all_services": {"ru": "Все сервисы", "en": "All services", "tk": "Ähli hyzmatlar"},
 
+    "profile": {
+        "ru": "[[user]] <b>ПРОФИЛЬ</b>\n\n"
+              "[[id]] ID: <code>{user_id}</code>\n"
+              "[[wallet]] Баланс: <b>{balance}</b>\n"
+              "[[orders]] Куплено номеров: <b>{orders}</b>\n"
+              "[[clock]] С нами с: <b>{since}</b>",
+        "en": "[[user]] <b>PROFILE</b>\n\n"
+              "[[id]] ID: <code>{user_id}</code>\n"
+              "[[wallet]] Balance: <b>{balance}</b>\n"
+              "[[orders]] Numbers bought: <b>{orders}</b>\n"
+              "[[clock]] Member since: <b>{since}</b>",
+        "tk": "[[user]] <b>PROFIL</b>\n\n"
+              "[[id]] ID: <code>{user_id}</code>\n"
+              "[[wallet]] Balans: <b>{balance}</b>\n"
+              "[[orders]] Satyn alnan belgiler: <b>{orders}</b>\n"
+              "[[clock]] Agza bolan senesi: <b>{since}</b>",
+    },
+
     "choose_service": {
-        "ru": "[[buy]] <b>Покупка номера</b>\n\n"
-              "<blockquote>[[fire]] Ниже — самые популярные сервисы\n"
-              "[[search]] Нужного нет? Нажмите «Поиск» или просто напишите название</blockquote>\n\n"
-              "[[down]] <b>Выберите сервис</b>",
-        "en": "[[buy]] <b>Buy a number</b>\n\n"
-              "<blockquote>[[fire]] The most popular services are below\n"
-              "[[search]] Not there? Tap «Search» or just type the name</blockquote>\n\n"
-              "[[down]] <b>Choose a service</b>",
-        "tk": "[[buy]] <b>Belgi satyn almak</b>\n\n"
-              "<blockquote>[[fire]] Aşakda iň meşhur hyzmatlar\n"
-              "[[search]] Gerekli ýokmy? «Gözleg» basyň ýa-da adyny ýazyň</blockquote>\n\n"
-              "[[down]] <b>Hyzmaty saýlaň</b>",
+        "ru": "[[buy]] <b>ПОКУПКА НОМЕРА</b>\n\n"
+              "Выберите сервис или напишите его название.",
+        "en": "[[buy]] <b>BUY A NUMBER</b>\n\n"
+              "Choose a service or type its name.",
+        "tk": "[[buy]] <b>BELGI SATYN ALMAK</b>\n\n"
+              "Hyzmaty saýlaň ýa-da adyny ýazyň.",
     },
     "all_services": {
-        "ru": "[[service]] <b>Все сервисы</b>\n<blockquote>[[info]] Страница {page} из {pages}</blockquote>",
-        "en": "[[service]] <b>All services</b>\n<blockquote>[[info]] Page {page} of {pages}</blockquote>",
-        "tk": "[[service]] <b>Ähli hyzmatlar</b>\n<blockquote>[[info]] Sahypa {page} / {pages}</blockquote>",
+        "ru": "[[service]] <b>ВСЕ СЕРВИСЫ</b>\n\nСтраница {page} из {pages}",
+        "en": "[[service]] <b>ALL SERVICES</b>\n\nPage {page} of {pages}",
+        "tk": "[[service]] <b>ÄHLI HYZMATLAR</b>\n\nSahypa {page} / {pages}",
     },
     "search_prompt": {
-        "ru": "[[search]] <b>Поиск сервиса</b>\n\n"
-              "<blockquote>Отправьте название, например:\n<i>Telegram · WhatsApp · Google</i></blockquote>",
-        "en": "[[search]] <b>Service search</b>\n\n"
-              "<blockquote>Send the name, for example:\n<i>Telegram · WhatsApp · Google</i></blockquote>",
-        "tk": "[[search]] <b>Hyzmat gözlemek</b>\n\n"
-              "<blockquote>Adyny iberiň, mysal üçin:\n<i>Telegram · WhatsApp · Google</i></blockquote>",
+        "ru": "[[search]] <b>ПОИСК</b>\n\nНапишите название сервиса, например <i>Telegram</i>.",
+        "en": "[[search]] <b>SEARCH</b>\n\nType the service name, for example <i>Telegram</i>.",
+        "tk": "[[search]] <b>GÖZLEG</b>\n\nHyzmatyň adyny ýazyň, mysal üçin <i>Telegram</i>.",
     },
     "search_results": {
-        "ru": "[[search]] <b>Результаты поиска</b>\n<blockquote>По запросу «<b>{query}</b>»</blockquote>",
-        "en": "[[search]] <b>Search results</b>\n<blockquote>For «<b>{query}</b>»</blockquote>",
-        "tk": "[[search]] <b>Gözleg netijeleri</b>\n<blockquote>«<b>{query}</b>» boýunça</blockquote>",
+        "ru": "[[search]] <b>РЕЗУЛЬТАТЫ</b>\n\nПо запросу «{query}»:",
+        "en": "[[search]] <b>RESULTS</b>\n\nFor «{query}»:",
+        "tk": "[[search]] <b>NETIJELER</b>\n\n«{query}» boýunça:",
     },
     "search_empty": {
-        "ru": "[[warning]] <b>Ничего не найдено</b>\n"
-              "<blockquote>По запросу «<b>{query}</b>» сервисов нет.\nПопробуйте другое название.</blockquote>",
-        "en": "[[warning]] <b>Nothing found</b>\n"
-              "<blockquote>No services for «<b>{query}</b>».\nTry another name.</blockquote>",
-        "tk": "[[warning]] <b>Hiç zat tapylmady</b>\n"
-              "<blockquote>«<b>{query}</b>» boýunça hyzmat ýok.\nBaşga at synap görüň.</blockquote>",
+        "ru": "[[warning]] По запросу «{query}» ничего не найдено.",
+        "en": "[[warning]] Nothing found for «{query}».",
+        "tk": "[[warning]] «{query}» boýunça hiç zat tapylmady.",
     },
     "choose_country": {
         "ru": "[[service]] <b>{service}</b>\n\n"
-              "<blockquote>[[globe]] Доступно стран · <b>{total}</b>\n"
-              "[[price]] Цены от · <b>{min_price}</b>\n"
-              "[[info]] Страница {page} из {pages}</blockquote>\n\n"
-              "[[down]] <b>Выберите страну</b> <i>(сначала дешёвые)</i>",
+              "[[globe]] Стран: <b>{total}</b>\n"
+              "[[price]] Цены от: <b>{min_price}</b>\n\n"
+              "Выберите страну.",
         "en": "[[service]] <b>{service}</b>\n\n"
-              "<blockquote>[[globe]] Countries available · <b>{total}</b>\n"
-              "[[price]] Prices from · <b>{min_price}</b>\n"
-              "[[info]] Page {page} of {pages}</blockquote>\n\n"
-              "[[down]] <b>Choose a country</b> <i>(cheapest first)</i>",
+              "[[globe]] Countries: <b>{total}</b>\n"
+              "[[price]] Prices from: <b>{min_price}</b>\n\n"
+              "Choose a country.",
         "tk": "[[service]] <b>{service}</b>\n\n"
-              "<blockquote>[[globe]] Elýeterli ýurtlar · <b>{total}</b>\n"
-              "[[price]] Bahasy · <b>{min_price}</b>-dan\n"
-              "[[info]] Sahypa {page} / {pages}</blockquote>\n\n"
-              "[[down]] <b>Ýurdy saýlaň</b> <i>(arzanlary ilki)</i>",
+              "[[globe]] Ýurtlar: <b>{total}</b>\n"
+              "[[price]] Bahasy: <b>{min_price}</b>-dan\n\n"
+              "Ýurdy saýlaň.",
     },
     "no_countries": {
-        "ru": "[[warning]] <b>Нет свободных номеров</b>\n"
-              "<blockquote>Для <b>{service}</b> сейчас номеров нет.\nПопробуйте немного позже.</blockquote>",
-        "en": "[[warning]] <b>No numbers available</b>\n"
-              "<blockquote>No numbers for <b>{service}</b> right now.\nPlease try a bit later.</blockquote>",
-        "tk": "[[warning]] <b>Boş belgi ýok</b>\n"
-              "<blockquote>Häzir <b>{service}</b> üçin belgi ýok.\nBiraz soňrak synanyşyň.</blockquote>",
+        "ru": "[[warning]] Для <b>{service}</b> сейчас нет номеров. Попробуйте позже.",
+        "en": "[[warning]] No numbers for <b>{service}</b> right now. Try later.",
+        "tk": "[[warning]] Häzir <b>{service}</b> üçin belgi ýok. Soňrak synanyşyň.",
     },
     "confirm": {
-        "ru": "[[buy]] <b>Оформление заказа</b>\n\n"
-              "<blockquote>[[service]] Сервис · <b>{service}</b>\n"
-              "[[globe]] Страна · <b>{country}</b>\n"
-              "[[stock]] В наличии · <b>{count}</b> шт.</blockquote>\n\n"
-              "<blockquote>[[price]] Цена · <b>{price}</b>\n"
-              "[[wallet]] Ваш баланс · <b>{balance}</b></blockquote>\n\n"
-              "[[shield]] <i>Если СМС не придёт — деньги автоматически вернутся на баланс</i>",
-        "en": "[[buy]] <b>Checkout</b>\n\n"
-              "<blockquote>[[service]] Service · <b>{service}</b>\n"
-              "[[globe]] Country · <b>{country}</b>\n"
-              "[[stock]] In stock · <b>{count}</b></blockquote>\n\n"
-              "<blockquote>[[price]] Price · <b>{price}</b>\n"
-              "[[wallet]] Your balance · <b>{balance}</b></blockquote>\n\n"
-              "[[shield]] <i>If no SMS arrives, the money is returned to your balance automatically</i>",
-        "tk": "[[buy]] <b>Sargyt etmek</b>\n\n"
-              "<blockquote>[[service]] Hyzmat · <b>{service}</b>\n"
-              "[[globe]] Ýurt · <b>{country}</b>\n"
-              "[[stock]] Elýeterli · <b>{count}</b> sany</blockquote>\n\n"
-              "<blockquote>[[price]] Bahasy · <b>{price}</b>\n"
-              "[[wallet]] Balansyňyz · <b>{balance}</b></blockquote>\n\n"
-              "[[shield]] <i>SMS gelmese — pul balansyňyza awtomatik gaýtarylýar</i>",
+        "ru": "[[buy]] <b>ОФОРМЛЕНИЕ</b>\n\n"
+              "[[service]] {service} · {country}\n"
+              "[[price]] Цена: <b>{price}</b>\n"
+              "[[stock]] В наличии: <b>{count} шт.</b>\n"
+              "[[wallet]] Баланс: <b>{balance}</b>\n\n"
+              "Если СМС не придёт — деньги вернутся на баланс.",
+        "en": "[[buy]] <b>CHECKOUT</b>\n\n"
+              "[[service]] {service} · {country}\n"
+              "[[price]] Price: <b>{price}</b>\n"
+              "[[stock]] In stock: <b>{count}</b>\n"
+              "[[wallet]] Balance: <b>{balance}</b>\n\n"
+              "If no SMS arrives, the money returns to your balance.",
+        "tk": "[[buy]] <b>SARGYT</b>\n\n"
+              "[[service]] {service} · {country}\n"
+              "[[price]] Bahasy: <b>{price}</b>\n"
+              "[[stock]] Elýeterli: <b>{count} sany</b>\n"
+              "[[wallet]] Balans: <b>{balance}</b>\n\n"
+              "SMS gelmese, pul balansyňyza gaýdyp geler.",
     },
     "btn_confirm_buy": {"ru": "Купить за {price}", "en": "Buy for {price}", "tk": "{price} bahasyna al"},
     "not_enough": {
-        "ru": "\n\n[[warning]] <b>Недостаточно средств</b>\n"
-              "<blockquote>Не хватает · <b>{missing}</b>\nПополните баланс и возвращайтесь [[down]]</blockquote>",
-        "en": "\n\n[[warning]] <b>Insufficient funds</b>\n"
-              "<blockquote>Missing · <b>{missing}</b>\nTop up your balance and come back [[down]]</blockquote>",
-        "tk": "\n\n[[warning]] <b>Balans ýeterlik däl</b>\n"
-              "<blockquote>Ýetmeýär · <b>{missing}</b>\nBalansy dolduryň we yzyna geliň [[down]]</blockquote>",
+        "ru": "\n\n[[warning]] Не хватает <b>{missing}</b> — пополните баланс.",
+        "en": "\n\n[[warning]] You need <b>{missing}</b> more — top up your balance.",
+        "tk": "\n\n[[warning]] <b>{missing}</b> ýetmeýär — balansy dolduryň.",
     },
     "buying": {
         "ru": "[[wait]] Получаем номер…",
@@ -164,111 +149,87 @@ TEXTS: dict[str, dict[str, str]] = {
         "tk": "[[wait]] Belgi alynýar…",
     },
     "no_numbers": {
-        "ru": "[[warning]] <b>Номер не получен</b>\n"
-              "<blockquote>Номера закончились или цена изменилась.\nДеньги не списаны — выберите другую страну.</blockquote>",
-        "en": "[[warning]] <b>Number not received</b>\n"
-              "<blockquote>Numbers ran out or the price changed.\nYou were not charged — choose another country.</blockquote>",
-        "tk": "[[warning]] <b>Belgi alynmady</b>\n"
-              "<blockquote>Belgiler gutardy ýa-da baha üýtgedi.\nPul alynmady — başga ýurt saýlaň.</blockquote>",
+        "ru": "[[warning]] Номера закончились или цена изменилась. Деньги не списаны — выберите другую страну.",
+        "en": "[[warning]] Numbers ran out or the price changed. You were not charged — choose another country.",
+        "tk": "[[warning]] Belgiler gutardy ýa-da baha üýtgedi. Pul alynmady — başga ýurt saýlaň.",
     },
     "buy_error": {
-        "ru": "[[warning]] <b>Временная ошибка</b>\n"
-              "<blockquote>Не удалось получить номер, деньги не списаны.\nПопробуйте через минуту.</blockquote>",
-        "en": "[[warning]] <b>Temporary error</b>\n"
-              "<blockquote>Couldn't get a number, you were not charged.\nPlease try again in a minute.</blockquote>",
-        "tk": "[[warning]] <b>Wagtlaýyn ýalňyşlyk</b>\n"
-              "<blockquote>Belgi alyp bolmady, pul alynmady.\nBir minutdan synanyşyň.</blockquote>",
+        "ru": "[[warning]] Не удалось получить номер, деньги не списаны. Попробуйте через минуту.",
+        "en": "[[warning]] Couldn't get a number, you were not charged. Try again in a minute.",
+        "tk": "[[warning]] Belgi alyp bolmady, pul alynmady. Bir minutdan synanyşyň.",
     },
     "order_waiting": {
-        "ru": "[[ok]] <b>Номер выдан</b> [[sparkle]]\n\n"
-              "<blockquote>[[phone]] <code>+{phone}</code></blockquote>\n\n"
-              "<blockquote>[[service]] Сервис · <b>{service}</b>\n"
-              "[[globe]] Страна · <b>{country}</b>\n"
-              "[[price]] Цена · <b>{price}</b></blockquote>\n\n"
-              "<blockquote>[[wait]] <b>Ожидаем СМС…</b>\n"
-              "{bar}\n"
-              "[[clock]] Осталось · <b>{left} мин</b></blockquote>\n\n"
-              "[[bell]] <i>Код придёт сюда автоматически</i>",
-        "en": "[[ok]] <b>Number issued</b> [[sparkle]]\n\n"
-              "<blockquote>[[phone]] <code>+{phone}</code></blockquote>\n\n"
-              "<blockquote>[[service]] Service · <b>{service}</b>\n"
-              "[[globe]] Country · <b>{country}</b>\n"
-              "[[price]] Price · <b>{price}</b></blockquote>\n\n"
-              "<blockquote>[[wait]] <b>Waiting for SMS…</b>\n"
-              "{bar}\n"
-              "[[clock]] Time left · <b>{left} min</b></blockquote>\n\n"
-              "[[bell]] <i>The code will appear here automatically</i>",
-        "tk": "[[ok]] <b>Belgi berildi</b> [[sparkle]]\n\n"
-              "<blockquote>[[phone]] <code>+{phone}</code></blockquote>\n\n"
-              "<blockquote>[[service]] Hyzmat · <b>{service}</b>\n"
-              "[[globe]] Ýurt · <b>{country}</b>\n"
-              "[[price]] Bahasy · <b>{price}</b></blockquote>\n\n"
-              "<blockquote>[[wait]] <b>SMS garaşylýar…</b>\n"
-              "{bar}\n"
-              "[[clock]] Galan wagt · <b>{left} min</b></blockquote>\n\n"
-              "[[bell]] <i>Kod şu ýere awtomatik geler</i>",
+        "ru": "[[phone]] <b>НОМЕР ВЫДАН</b>\n\n"
+              "<code>+{phone}</code>\n\n"
+              "[[service]] {service} · {country}\n"
+              "[[price]] Цена: <b>{price}</b>\n"
+              "[[clock]] Ожидание СМС: <b>{left} мин</b>\n\n"
+              "Код придёт сюда автоматически.",
+        "en": "[[phone]] <b>NUMBER ISSUED</b>\n\n"
+              "<code>+{phone}</code>\n\n"
+              "[[service]] {service} · {country}\n"
+              "[[price]] Price: <b>{price}</b>\n"
+              "[[clock]] Waiting for SMS: <b>{left} min</b>\n\n"
+              "The code will appear here automatically.",
+        "tk": "[[phone]] <b>BELGI BERILDI</b>\n\n"
+              "<code>+{phone}</code>\n\n"
+              "[[service]] {service} · {country}\n"
+              "[[price]] Bahasy: <b>{price}</b>\n"
+              "[[clock]] SMS garaşylýar: <b>{left} min</b>\n\n"
+              "Kod şu ýere awtomatik geler.",
     },
     "order_code": {
-        "ru": "[[ok]] <b>СМС получено!</b> [[sparkle]]\n\n"
-              "<blockquote>[[code]] Код · <code>{code}</code></blockquote>\n\n"
-              "<blockquote>[[phone]] <code>+{phone}</code>\n"
-              "[[service]] {service} · {country}</blockquote>\n\n"
-              "[[sms]] <i>Нужен ещё код на этот номер? Нажмите «Ещё СМС»</i>",
-        "en": "[[ok]] <b>SMS received!</b> [[sparkle]]\n\n"
-              "<blockquote>[[code]] Code · <code>{code}</code></blockquote>\n\n"
-              "<blockquote>[[phone]] <code>+{phone}</code>\n"
-              "[[service]] {service} · {country}</blockquote>\n\n"
-              "[[sms]] <i>Need another code on this number? Tap «Another SMS»</i>",
-        "tk": "[[ok]] <b>SMS geldi!</b> [[sparkle]]\n\n"
-              "<blockquote>[[code]] Kod · <code>{code}</code></blockquote>\n\n"
-              "<blockquote>[[phone]] <code>+{phone}</code>\n"
-              "[[service]] {service} · {country}</blockquote>\n\n"
-              "[[sms]] <i>Şu belgä ýene kod gerekmi? «Ýene SMS» basyň</i>",
+        "ru": "[[ok]] <b>КОД ПОЛУЧЕН</b>\n\n"
+              "[[code]] <code>{code}</code>\n\n"
+              "[[phone]] <code>+{phone}</code>\n"
+              "[[service]] {service} · {country}",
+        "en": "[[ok]] <b>CODE RECEIVED</b>\n\n"
+              "[[code]] <code>{code}</code>\n\n"
+              "[[phone]] <code>+{phone}</code>\n"
+              "[[service]] {service} · {country}",
+        "tk": "[[ok]] <b>KOD GELDI</b>\n\n"
+              "[[code]] <code>{code}</code>\n\n"
+              "[[phone]] <code>+{phone}</code>\n"
+              "[[service]] {service} · {country}",
     },
     "order_done": {
-        "ru": "[[done]] <b>Активация завершена</b>\n\n"
-              "<blockquote>[[phone]] <code>+{phone}</code>\n"
+        "ru": "[[done]] <b>ГОТОВО</b>\n\n"
+              "[[phone]] <code>+{phone}</code>\n"
               "[[service]] {service} · {country}\n"
-              "[[code]] Код · <code>{code}</code></blockquote>\n\n"
-              "[[sparkle]] <i>Спасибо за покупку!</i>",
-        "en": "[[done]] <b>Activation completed</b>\n\n"
-              "<blockquote>[[phone]] <code>+{phone}</code>\n"
+              "[[code]] Код: <code>{code}</code>",
+        "en": "[[done]] <b>DONE</b>\n\n"
+              "[[phone]] <code>+{phone}</code>\n"
               "[[service]] {service} · {country}\n"
-              "[[code]] Code · <code>{code}</code></blockquote>\n\n"
-              "[[sparkle]] <i>Thank you for your purchase!</i>",
-        "tk": "[[done]] <b>Aktiwasiýa tamamlandy</b>\n\n"
-              "<blockquote>[[phone]] <code>+{phone}</code>\n"
+              "[[code]] Code: <code>{code}</code>",
+        "tk": "[[done]] <b>TAÝÝAR</b>\n\n"
+              "[[phone]] <code>+{phone}</code>\n"
               "[[service]] {service} · {country}\n"
-              "[[code]] Kod · <code>{code}</code></blockquote>\n\n"
-              "[[sparkle]] <i>Satyn alanyňyz üçin sag boluň!</i>",
+              "[[code]] Kod: <code>{code}</code>",
     },
     "order_cancelled": {
-        "ru": "[[cancel]] <b>Номер отменён</b>\n\n"
-              "<blockquote>[[phone]] <code>+{phone}</code> · {service}\n"
-              "[[money]] Возвращено · <b>{price}</b></blockquote>",
-        "en": "[[cancel]] <b>Number cancelled</b>\n\n"
-              "<blockquote>[[phone]] <code>+{phone}</code> · {service}\n"
-              "[[money]] Refunded · <b>{price}</b></blockquote>",
-        "tk": "[[cancel]] <b>Belgi ýatyryldy</b>\n\n"
-              "<blockquote>[[phone]] <code>+{phone}</code> · {service}\n"
-              "[[money]] Gaýtaryldy · <b>{price}</b></blockquote>",
+        "ru": "[[cancel]] <b>НОМЕР ОТМЕНЁН</b>\n\n"
+              "[[phone]] <code>+{phone}</code> · {service}\n"
+              "[[money]] Возвращено: <b>{price}</b>",
+        "en": "[[cancel]] <b>NUMBER CANCELLED</b>\n\n"
+              "[[phone]] <code>+{phone}</code> · {service}\n"
+              "[[money]] Refunded: <b>{price}</b>",
+        "tk": "[[cancel]] <b>BELGI ÝATYRYLDY</b>\n\n"
+              "[[phone]] <code>+{phone}</code> · {service}\n"
+              "[[money]] Gaýtaryldy: <b>{price}</b>",
     },
     "order_timeout": {
-        "ru": "[[wait]] <b>Время ожидания истекло</b>\n\n"
-              "<blockquote>[[phone]] <code>+{phone}</code> · {service}\n"
-              "[[sms]] СМС не пришло\n"
-              "[[money]] Возвращено · <b>{price}</b></blockquote>\n\n"
-              "[[info]] <i>Попробуйте другую страну</i>",
-        "en": "[[wait]] <b>Time is up</b>\n\n"
-              "<blockquote>[[phone]] <code>+{phone}</code> · {service}\n"
-              "[[sms]] No SMS arrived\n"
-              "[[money]] Refunded · <b>{price}</b></blockquote>\n\n"
-              "[[info]] <i>Try another country</i>",
-        "tk": "[[wait]] <b>Garaşmak wagty gutardy</b>\n\n"
-              "<blockquote>[[phone]] <code>+{phone}</code> · {service}\n"
-              "[[sms]] SMS gelmedi\n"
-              "[[money]] Gaýtaryldy · <b>{price}</b></blockquote>\n\n"
-              "[[info]] <i>Başga ýurt synap görüň</i>",
+        "ru": "[[wait]] <b>СМС НЕ ПРИШЛО</b>\n\n"
+              "[[phone]] <code>+{phone}</code> · {service}\n"
+              "[[money]] Возвращено: <b>{price}</b>\n\n"
+              "Попробуйте другую страну.",
+        "en": "[[wait]] <b>NO SMS ARRIVED</b>\n\n"
+              "[[phone]] <code>+{phone}</code> · {service}\n"
+              "[[money]] Refunded: <b>{price}</b>\n\n"
+              "Try another country.",
+        "tk": "[[wait]] <b>SMS GELMEDI</b>\n\n"
+              "[[phone]] <code>+{phone}</code> · {service}\n"
+              "[[money]] Gaýtaryldy: <b>{price}</b>\n\n"
+              "Başga ýurt synap görüň.",
     },
     "cancel_early": {
         "ru": "Отменить можно через 2 минуты после покупки",
@@ -285,7 +246,7 @@ TEXTS: dict[str, dict[str, str]] = {
         "en": "Waiting for the next SMS…",
         "tk": "Indiki SMS garaşylýar…",
     },
-    "btn_cancel_order": {"ru": "Отменить номер", "en": "Cancel number", "tk": "Belgini ýatyr"},
+    "btn_cancel_order": {"ru": "Отменить", "en": "Cancel", "tk": "Ýatyr"},
     "btn_another_sms": {"ru": "Ещё СМС", "en": "Another SMS", "tk": "Ýene SMS"},
     "btn_finish": {"ru": "Завершить", "en": "Finish", "tk": "Tamamla"},
     "btn_copy_phone": {"ru": "Скопировать номер", "en": "Copy number", "tk": "Belgini göçür"},
@@ -293,83 +254,68 @@ TEXTS: dict[str, dict[str, str]] = {
     "btn_buy_more": {"ru": "Купить ещё", "en": "Buy more", "tk": "Ýene al"},
 
     "orders_title": {
-        "ru": "[[orders]] <b>Мои номера</b>\n<i>Последние 10 заказов</i>",
-        "en": "[[orders]] <b>My numbers</b>\n<i>Last 10 orders</i>",
-        "tk": "[[orders]] <b>Meniň belgilerim</b>\n<i>Soňky 10 sargyt</i>",
+        "ru": "[[orders]] <b>МОИ НОМЕРА</b>\n",
+        "en": "[[orders]] <b>MY NUMBERS</b>\n",
+        "tk": "[[orders]] <b>BELGILERIM</b>\n",
     },
     "orders_empty": {
-        "ru": "[[orders]] <b>Мои номера</b>\n\n<blockquote>[[box]] У вас пока нет номеров.\n"
-              "Купите первый — это займёт пару секунд [[rocket]]</blockquote>",
-        "en": "[[orders]] <b>My numbers</b>\n\n<blockquote>[[box]] You have no numbers yet.\n"
-              "Buy your first one — it takes seconds [[rocket]]</blockquote>",
-        "tk": "[[orders]] <b>Meniň belgilerim</b>\n\n<blockquote>[[box]] Entek belgiňiz ýok.\n"
-              "Ilkinjisini alyň — bary-ýogy birnäçe sekunt [[rocket]]</blockquote>",
+        "ru": "[[orders]] <b>МОИ НОМЕРА</b>\n\nЗдесь пока пусто.",
+        "en": "[[orders]] <b>MY NUMBERS</b>\n\nNothing here yet.",
+        "tk": "[[orders]] <b>BELGILERIM</b>\n\nEntek hiç zat ýok.",
     },
     "orders_active_hint": {
-        "ru": "[[down]] <b>Активные номера</b> — нажмите, чтобы открыть",
-        "en": "[[down]] <b>Active numbers</b> — tap to open",
-        "tk": "[[down]] <b>Işjeň belgiler</b> — açmak üçin basyň",
+        "ru": "\nАктивные номера — в кнопках ниже.",
+        "en": "\nActive numbers are in the buttons below.",
+        "tk": "\nIşjeň belgiler aşakdaky düwmelerde.",
     },
     "status_waiting": {"ru": "ожидает СМС", "en": "waiting for SMS", "tk": "SMS garaşylýar"},
     "status_got_code": {"ru": "код получен", "en": "code received", "tk": "kod geldi"},
     "status_done": {"ru": "завершён", "en": "completed", "tk": "tamamlandy"},
-    "status_cancelled": {"ru": "отменён, деньги возвращены", "en": "cancelled, refunded", "tk": "ýatyryldy, pul gaýtaryldy"},
+    "status_cancelled": {"ru": "возврат", "en": "refunded", "tk": "gaýtaryldy"},
 
     "topup": {
-        "ru": "[[wallet]] <b>Пополнение баланса</b>\n\n"
-              "<blockquote>[[money]] Текущий баланс · <b>{balance}</b></blockquote>\n\n"
-              "<blockquote>[[crypto]] <b>Крипта</b> — USDT, TON, BTC и др.\n"
-              "[[star]] <b>Telegram Stars</b> — прямо в Telegram\n"
-              "[[card]] <b>Карта</b> — оплата в рублях</blockquote>\n\n"
-              "[[down]] <b>Выберите способ оплаты</b>",
-        "en": "[[wallet]] <b>Top up balance</b>\n\n"
-              "<blockquote>[[money]] Current balance · <b>{balance}</b></blockquote>\n\n"
-              "<blockquote>[[crypto]] <b>Crypto</b> — USDT, TON, BTC, etc.\n"
-              "[[star]] <b>Telegram Stars</b> — right inside Telegram\n"
-              "[[card]] <b>Card</b> — pay in rubles</blockquote>\n\n"
-              "[[down]] <b>Choose a payment method</b>",
-        "tk": "[[wallet]] <b>Balansy doldurmak</b>\n\n"
-              "<blockquote>[[money]] Häzirki balans · <b>{balance}</b></blockquote>\n\n"
-              "<blockquote>[[crypto]] <b>Kripto</b> — USDT, TON, BTC we ş.m.\n"
-              "[[star]] <b>Telegram Stars</b> — göni Telegramda\n"
-              "[[card]] <b>Karta</b> — rubl bilen tölemek</blockquote>\n\n"
-              "[[down]] <b>Töleg usulyny saýlaň</b>",
+        "ru": "[[wallet]] <b>ПОПОЛНЕНИЕ</b>\n\n"
+              "[[money]] Баланс: <b>{balance}</b>\n\n"
+              "Выберите способ оплаты.",
+        "en": "[[wallet]] <b>TOP UP</b>\n\n"
+              "[[money]] Balance: <b>{balance}</b>\n\n"
+              "Choose a payment method.",
+        "tk": "[[wallet]] <b>DOLDURMAK</b>\n\n"
+              "[[money]] Balans: <b>{balance}</b>\n\n"
+              "Töleg usulyny saýlaň.",
     },
     "btn_pay_crypto": {"ru": "Криптовалюта", "en": "Cryptocurrency", "tk": "Kriptowalýuta"},
     "btn_pay_stars": {"ru": "Telegram Stars", "en": "Telegram Stars", "tk": "Telegram Stars"},
     "btn_pay_card": {"ru": "Банковская карта", "en": "Bank card", "tk": "Bank kartasy"},
     "choose_amount": {
         "ru": "[[money]] <b>{method}</b>\n\n"
-              "<blockquote>[[info]] Выберите сумму ниже\nили отправьте свою числом\n"
-              "[[check]] Минимум · <b>{min} ₽</b></blockquote>",
+              "Выберите сумму или отправьте свою.\n"
+              "Минимум: <b>{min} ₽</b>",
         "en": "[[money]] <b>{method}</b>\n\n"
-              "<blockquote>[[info]] Choose an amount below\nor send your own as a number\n"
-              "[[check]] Minimum · <b>{min} ₽</b></blockquote>",
+              "Choose an amount or send your own.\n"
+              "Minimum: <b>{min} ₽</b>",
         "tk": "[[money]] <b>{method}</b>\n\n"
-              "<blockquote>[[info]] Aşakdan mukdary saýlaň\nýa-da öz mukdaryňyzy san bilen iberiň\n"
-              "[[check]] Iň az · <b>{min} ₽</b></blockquote>",
+              "Mukdary saýlaň ýa-da öz mukdaryňyzy iberiň.\n"
+              "Iň az: <b>{min} ₽</b>",
     },
     "bad_amount": {
-        "ru": "[[warning]] <b>Неверная сумма</b>\n<blockquote>Введите число от {min} до 100 000 ₽</blockquote>",
-        "en": "[[warning]] <b>Invalid amount</b>\n<blockquote>Enter a number from {min} to 100 000 ₽</blockquote>",
-        "tk": "[[warning]] <b>Nädogry mukdar</b>\n<blockquote>{min} we 100 000 ₽ aralygynda san giriziň</blockquote>",
+        "ru": "[[warning]] Введите число от {min} до 100 000 ₽",
+        "en": "[[warning]] Enter a number from {min} to 100 000 ₽",
+        "tk": "[[warning]] {min} we 100 000 ₽ aralygynda san giriziň",
     },
     "crypto_invoice": {
-        "ru": "[[crypto]] <b>Счёт создан</b>\n\n"
-              "<blockquote>[[money]] Сумма · <b>{amount}</b>\n"
-              "[[diamond]] Оплата · USDT, TON, BTC, ETH и др.\n"
-              "[[clock]] Счёт действует · <b>1 час</b></blockquote>\n\n"
-              "[[check]] <i>Баланс пополнится автоматически после оплаты</i>",
-        "en": "[[crypto]] <b>Invoice created</b>\n\n"
-              "<blockquote>[[money]] Amount · <b>{amount}</b>\n"
-              "[[diamond]] Pay with · USDT, TON, BTC, ETH, etc.\n"
-              "[[clock]] Valid for · <b>1 hour</b></blockquote>\n\n"
-              "[[check]] <i>Your balance is topped up automatically after payment</i>",
-        "tk": "[[crypto]] <b>Hasap döredildi</b>\n\n"
-              "<blockquote>[[money]] Mukdar · <b>{amount}</b>\n"
-              "[[diamond]] Töleg · USDT, TON, BTC, ETH we ş.m.\n"
-              "[[clock]] Hereket edýär · <b>1 sagat</b></blockquote>\n\n"
-              "[[check]] <i>Tölegden soň balans awtomatik doldurylýar</i>",
+        "ru": "[[crypto]] <b>СЧЁТ НА {amount}</b>\n\n"
+              "[[ok]]USDT, TON, BTC, ETH и другие\n"
+              "[[clock]] Действует 1 час\n\n"
+              "Баланс пополнится автоматически после оплаты.",
+        "en": "[[crypto]] <b>INVOICE FOR {amount}</b>\n\n"
+              "[[ok]]USDT, TON, BTC, ETH and more\n"
+              "[[clock]] Valid for 1 hour\n\n"
+              "Your balance is topped up automatically after payment.",
+        "tk": "[[crypto]] <b>{amount} HASAP</b>\n\n"
+              "[[ok]]USDT, TON, BTC, ETH we başgalar\n"
+              "[[clock]] 1 sagat hereket edýär\n\n"
+              "Tölegden soň balans awtomatik doldurylýar.",
     },
     "stars_invoice_desc": {
         "ru": "Пополнение баланса на {amount}",
@@ -384,40 +330,31 @@ TEXTS: dict[str, dict[str, str]] = {
         "tk": "Töleg entek tapylmady. Tölän bolsaňyz, bir minut garaşyň.",
     },
     "pay_ok": {
-        "ru": "[[ok]] <b>Оплата получена!</b> [[sparkle]]\n\n"
-              "<blockquote>[[gift]] Зачислено · <b>+{amount}</b>\n"
-              "[[wallet]] Баланс · <b>{balance}</b></blockquote>\n\n"
-              "[[rocket]] <i>Можно покупать номера</i>",
-        "en": "[[ok]] <b>Payment received!</b> [[sparkle]]\n\n"
-              "<blockquote>[[gift]] Credited · <b>+{amount}</b>\n"
-              "[[wallet]] Balance · <b>{balance}</b></blockquote>\n\n"
-              "[[rocket]] <i>You can buy numbers now</i>",
-        "tk": "[[ok]] <b>Töleg kabul edildi!</b> [[sparkle]]\n\n"
-              "<blockquote>[[gift]] Goşuldy · <b>+{amount}</b>\n"
-              "[[wallet]] Balans · <b>{balance}</b></blockquote>\n\n"
-              "[[rocket]] <i>Indi belgi satyn alyp bilersiňiz</i>",
+        "ru": "[[ok]] <b>ОПЛАТА ПОЛУЧЕНА</b>\n\n"
+              "[[gift]] Зачислено: <b>+{amount}</b>\n"
+              "[[wallet]] Баланс: <b>{balance}</b>",
+        "en": "[[ok]] <b>PAYMENT RECEIVED</b>\n\n"
+              "[[gift]] Credited: <b>+{amount}</b>\n"
+              "[[wallet]] Balance: <b>{balance}</b>",
+        "tk": "[[ok]] <b>TÖLEG KABUL EDILDI</b>\n\n"
+              "[[gift]] Goşuldy: <b>+{amount}</b>\n"
+              "[[wallet]] Balans: <b>{balance}</b>",
     },
     "pay_unavailable": {
-        "ru": "[[warning]] <b>Способ оплаты недоступен</b>\n<blockquote>Выберите другой способ или попробуйте позже.</blockquote>",
-        "en": "[[warning]] <b>Payment method unavailable</b>\n<blockquote>Choose another method or try later.</blockquote>",
-        "tk": "[[warning]] <b>Töleg usuly elýeterli däl</b>\n<blockquote>Başga usul saýlaň ýa-da soňrak synanyşyň.</blockquote>",
+        "ru": "[[warning]] Этот способ оплаты сейчас недоступен.",
+        "en": "[[warning]] This payment method is unavailable right now.",
+        "tk": "[[warning]] Bu töleg usuly häzir elýeterli däl.",
     },
     "banned": {
-        "ru": "[[cancel]] <b>Доступ ограничен</b>\n<blockquote>Обратитесь в поддержку.</blockquote>",
-        "en": "[[cancel]] <b>Access restricted</b>\n<blockquote>Please contact support.</blockquote>",
-        "tk": "[[cancel]] <b>Giriş çäklendirildi</b>\n<blockquote>Goldaw bilen habarlaşyň.</blockquote>",
+        "ru": "[[cancel]] Доступ ограничен. Обратитесь в поддержку.",
+        "en": "[[cancel]] Access restricted. Please contact support.",
+        "tk": "[[cancel]] Giriş çäklendirildi. Goldaw bilen habarlaşyň.",
     },
     "banned_short": {"ru": "Доступ ограничен", "en": "Access restricted", "tk": "Giriş çäklendirildi"},
     "support": {
-        "ru": "[[support]] <b>Поддержка</b>\n\n"
-              "<blockquote>[[sms]] Ответим на любые вопросы\n[[clock]] Обычно в течение нескольких минут</blockquote>\n\n"
-              "[[down]] Пишите: {contact}",
-        "en": "[[support]] <b>Support</b>\n\n"
-              "<blockquote>[[sms]] We answer any questions\n[[clock]] Usually within a few minutes</blockquote>\n\n"
-              "[[down]] Write to: {contact}",
-        "tk": "[[support]] <b>Goldaw</b>\n\n"
-              "<blockquote>[[sms]] Islendik soraga jogap berýäris\n[[clock]] Adatça birnäçe minudyň içinde</blockquote>\n\n"
-              "[[down]] Ýazyň: {contact}",
+        "ru": "[[support]] <b>ПОДДЕРЖКА</b>\n\nОтветим на любые вопросы: {contact}",
+        "en": "[[support]] <b>SUPPORT</b>\n\nWe answer any questions: {contact}",
+        "tk": "[[support]] <b>GOLDAW</b>\n\nIslendik soraga jogap berýäris: {contact}",
     },
 }
 
@@ -440,11 +377,6 @@ def plain_t(lang: str | None, key: str, **kwargs) -> str:
     text = variants.get(lang or DEFAULT_LANG) or variants[DEFAULT_LANG]
     text = _marker.sub("", text).strip()
     return text.format(**kwargs) if kwargs else text
-
-
-def progress_bar(done: float, width: int = 10) -> str:
-    filled = max(0, min(width, round(done * width)))
-    return "▰" * filled + "▱" * (width - filled)
 
 
 def fmt_money(kopecks: int) -> str:

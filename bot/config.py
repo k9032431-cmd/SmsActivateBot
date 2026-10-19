@@ -24,8 +24,6 @@ class Config:
     bot_name: str = os.getenv("BOT_NAME", "SMS Number Bot")
     support_username: str = os.getenv("SUPPORT_USERNAME", "")
     channel_url: str = os.getenv("CHANNEL_URL", "")
-    # Картинка-баннер над главным меню (прямая ссылка на изображение), необязательно.
-    banner_url: str = os.getenv("BANNER_URL", "")
     db_path: str = os.getenv("DB_PATH", "bot.db")
     order_timeout_min: int = int(os.getenv("ORDER_TIMEOUT_MIN", "20"))
 

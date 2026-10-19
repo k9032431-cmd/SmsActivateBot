@@ -9,7 +9,6 @@ from ..emoji import e
 from ..grizzly import grizzly
 from ..i18n import fmt_money, t
 from ..keyboards import BLUE, GREEN, btn, kb
-from .start import home_btn
 
 router = Router()
 
@@ -37,18 +36,15 @@ async def orders_list(call: CallbackQuery, lang):
     await catalog.refresh()
     if not orders:
         return await show(call, t(lang, "orders_empty"), kb(
-            btn(t(lang, "btn_buy"), "buy", GREEN, cb="buy"), home_btn(lang)))
+            btn(t(lang, "btn_buy"), "buy", GREEN, cb="buy"), btn(t(lang, "btn_back"), "back", cb="menu")))
     blocks = [t(lang, "orders_title")]
     buttons = []
     for o in orders:
         status_emoji = {db.WAITING: "wait", db.GOT_CODE: "ok", db.DONE: "done", db.CANCELLED: "cancel"}[o["status"]]
         blocks.append(
-            f"<blockquote>{e('phone')} <code>+{o['phone']}</code>\n"
-            f"{e('service')} {escape(catalog.service_name(o['service']))} · {catalog.flag(o['country'])}"
-            f" · <b>{fmt_money(o['price'])}</b>\n"
-            f"{e(status_emoji)} <i>{t(lang, 'status_' + o['status'])}</i>"
-            + (f" · {e('code')} <code>{escape(o['code'])}</code>" if o["code"] else "")
-            + "</blockquote>"
+            f"{e(status_emoji)} {escape(catalog.service_name(o['service']))} {catalog.flag(o['country'])}"
+            f" · <code>+{o['phone']}</code> · <b>{fmt_money(o['price'])}</b>"
+            + (f" · <code>{escape(o['code'])}</code>" if o["code"] else f" · <i>{t(lang, 'status_' + o['status'])}</i>")
         )
         if o["status"] in (db.WAITING, db.GOT_CODE):
             buttons.append(btn(f"+{o['phone']} · {catalog.service_name(o['service'])}", "phone", BLUE,
@@ -56,7 +52,7 @@ async def orders_list(call: CallbackQuery, lang):
     if buttons:
         blocks.append(t(lang, "orders_active_hint"))
     await show(call, "\n".join(blocks), kb(*buttons, btn(t(lang, "btn_buy"), "buy", GREEN, cb="buy"),
-                                           home_btn(lang)))
+                                           btn(t(lang, "btn_back"), "back", cb="menu")))
 
 
 @router.callback_query(F.data.startswith("o:"))

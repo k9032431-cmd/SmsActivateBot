@@ -175,6 +175,13 @@ async def cancel_and_refund(order_id: int) -> bool:
     return True
 
 
+async def user_bought_count(user_id: int) -> int:
+    async with db().execute(
+        "SELECT COUNT(*) FROM orders WHERE user_id = ? AND status IN (?, ?)", (user_id, GOT_CODE, DONE)
+    ) as cur:
+        return (await cur.fetchone())[0]
+
+
 async def active_orders() -> list[aiosqlite.Row]:
     async with db().execute("SELECT * FROM orders WHERE status IN (?, ?)", (WAITING, GOT_CODE)) as cur:
         return await cur.fetchall()

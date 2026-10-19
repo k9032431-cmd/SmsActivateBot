@@ -9,6 +9,7 @@ from . import db
 FALLBACK = {
     # бренд и оформление
     "logo": "🐻",
+    "wave": "👋",
     "sparkle": "✨",
     "crown": "👑",
     "diamond": "💎",

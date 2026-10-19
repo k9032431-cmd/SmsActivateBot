@@ -55,8 +55,8 @@ async def buy_menu(call: CallbackQuery, lang, state: FSMContext):
         return await show(call, t(lang, "buy_error"), kb(home_btn(lang)))
     await show(call, t(lang, "choose_service"), services_kb(lang, items, [
         [btn(t(lang, "btn_search"), "search", GREEN, cb="search"),
-         btn(t(lang, "btn_all_services"), "phone", BLUE, cb="all:0")],
-        home_btn(lang),
+         btn(t(lang, "btn_all_services"), "service", BLUE, cb="all:0")],
+        btn(t(lang, "btn_back"), "back", cb="menu"),
     ]))
 
 

@@ -29,6 +29,9 @@ HELP = (
     "/setmarkup <code>2</code> — наценка (×2 = цена в 2 раза выше)\n"
     "/setusd <code>95</code> — курс USD→RUB (если баланс Grizzly в $)\n"
     "/setstar <code>1.8</code> — сколько ₽ стоит 1 ⭐\n"
+    "\n<b>Баннер главного меню</b>\n"
+    "/setbanner — отправьте фото или GIF с подписью /setbanner (или ответьте этой командой на фото)\n"
+    "/delbanner — вернуть баннер, который рисует бот\n"
     "\n<b>Премиум-эмодзи</b>\n"
     "/emojis — все эмодзи бота и их имена\n"
     "/emojipack <code>ссылка</code> — взять эмодзи из пака (t.me/addemoji/…), подбираются автоматически\n"
@@ -51,18 +54,17 @@ async def panel_text() -> str:
         g_text = f"ошибка: {escape(str(exc))}"
     e = emoji.e
     return (
-        f"{e('crown')} <b>Админ-панель</b> {e('sparkle')}\n\n"
-        f"<blockquote>{e('user')} Пользователи · <b>{s['users']}</b> <i>(+{s['users_day']} за 24ч)</i>\n"
-        f"{e('phone')} Продано номеров · <b>{s['orders']}</b> <i>(+{s['orders_day']} за 24ч)</i></blockquote>\n\n"
-        f"<blockquote>{e('money')} Выручка · <b>{fmt_money(s['revenue'])}</b>\n"
-        f"{e('chart')} Прибыль · <b>{fmt_money(s['profit'])}</b> <i>(+{fmt_money(s['profit_day'])} за 24ч)</i>\n"
-        f"{e('topup')} Пополнения · <b>{fmt_money(s['deposits'])}</b>\n"
-        f"{e('wallet')} На балансах клиентов · <b>{fmt_money(s['balances'])}</b></blockquote>\n\n"
-        f"<blockquote>{e('logo')} Баланс Grizzly · <b>{g_text}</b>\n"
-        f"{e('settings')} Наценка · <b>×{await catalog.markup():g}</b>\n"
-        f"{e('star')} 1 звезда · <b>{await catalog.star_rub():g} ₽</b>"
-        + (f"\n{e('money')} $1 · <b>{await catalog.usd_rub():g} ₽</b>" if config.grizzly_currency == "USD" else "")
-        + "</blockquote>"
+        f"{e('crown')} <b>АДМИН-ПАНЕЛЬ</b>\n\n"
+        f"{e('user')} Пользователи: <b>{s['users']}</b> <i>(+{s['users_day']} за 24ч)</i>\n"
+        f"{e('phone')} Продано номеров: <b>{s['orders']}</b> <i>(+{s['orders_day']} за 24ч)</i>\n\n"
+        f"{e('money')} Выручка: <b>{fmt_money(s['revenue'])}</b>\n"
+        f"{e('chart')} Прибыль: <b>{fmt_money(s['profit'])}</b> <i>(+{fmt_money(s['profit_day'])} за 24ч)</i>\n"
+        f"{e('topup')} Пополнения: <b>{fmt_money(s['deposits'])}</b>\n"
+        f"{e('wallet')} На балансах клиентов: <b>{fmt_money(s['balances'])}</b>\n\n"
+        f"{e('logo')} Баланс Grizzly: <b>{g_text}</b>\n"
+        f"{e('settings')} Наценка: <b>×{await catalog.markup():g}</b>\n"
+        f"{e('star')} 1 звезда: <b>{await catalog.star_rub():g} ₽</b>"
+        + (f"\n{e('money')} $1: <b>{await catalog.usd_rub():g} ₽</b>" if config.grizzly_currency == "USD" else "")
     )
 
 
@@ -196,6 +198,28 @@ async def cmd_emojipack(message: Message, command: CommandObject, bot: Bot):
     shown = " ".join(emoji.e(n) for n in assigned)
     await message.answer(f"✅ Из пака <b>{escape(sticker_set.title)}</b> поставлено {len(assigned)} эмодзи:\n"
                          f"{shown}\n\nОстальные можно поставить вручную — смотрите /emojis")
+
+
+@router.message(Command("setbanner"))
+async def cmd_setbanner(message: Message):
+    source = message if (message.photo or message.animation) else message.reply_to_message
+    if not source or not (source.photo or source.animation):
+        return await message.answer("Отправьте фото или GIF с подписью <code>/setbanner</code> "
+                                    "или ответьте этой командой на сообщение с картинкой.")
+    if source.animation:
+        kind, file_id = "animation", source.animation.file_id
+    else:
+        kind, file_id = "photo", source.photo[-1].file_id
+    await db.set_setting("banner_type", kind)
+    await db.set_setting("banner_file_id", file_id)
+    await message.answer("✅ Баннер обновлён — откройте /start")
+
+
+@router.message(Command("delbanner"))
+async def cmd_delbanner(message: Message):
+    await db.del_setting("banner_type")
+    await db.del_setting("banner_file_id")
+    await message.answer("✅ Вернул баннер, который рисует бот — откройте /start")
 
 
 @router.message(Command("delemoji"))

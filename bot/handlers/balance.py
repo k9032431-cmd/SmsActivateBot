@@ -45,7 +45,7 @@ async def topup(call: CallbackQuery, user, lang, state: FSMContext):
     styles = {"crypto": BLUE, "stars": GREEN, "card": BLUE}
     buttons = [btn(t(lang, label), emoji, styles[m], cb=f"pm:{m}")
                for m, (label, emoji) in METHODS.items() if method_enabled(m)]
-    await show(call, t(lang, "topup", balance=fmt_money(user["balance"])), kb(*buttons, home_btn(lang)))
+    await show(call, t(lang, "topup", balance=fmt_money(user["balance"])), kb(*buttons, btn(t(lang, "btn_back"), "back", cb="menu")))
 
 
 @router.callback_query(F.data.startswith("pm:"))
