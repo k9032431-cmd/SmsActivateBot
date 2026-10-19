@@ -9,8 +9,10 @@ from aiogram.types import BotCommand
 from . import catalog, db, emoji, workers
 from .common import UserMiddleware
 from .config import config
+from .cryptomus import cryptomus
 from .cryptopay import cryptopay
 from .grizzly import grizzly
+from .yoomoney import yoomoney
 from .handlers import admin, balance, buy, orders, start
 
 
@@ -34,9 +36,8 @@ async def main() -> None:
     dp.include_routers(admin.router, start.router, balance.router, orders.router, buy.router)
 
     await bot.set_my_commands([BotCommand(command="start", description="Main menu · Главное меню")])
-    tasks = [asyncio.create_task(workers.orders_loop(bot))]
-    if cryptopay.enabled:
-        tasks.append(asyncio.create_task(workers.crypto_loop(bot)))
+    tasks = [asyncio.create_task(workers.orders_loop(bot)),
+             asyncio.create_task(workers.payments_loop(bot))]
     try:
         await dp.start_polling(bot)
     finally:
@@ -44,6 +45,8 @@ async def main() -> None:
             task.cancel()
         await grizzly.close()
         await cryptopay.close()
+        await cryptomus.close()
+        await yoomoney.close()
         await db.close()
         await bot.session.close()
 

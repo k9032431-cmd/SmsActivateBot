@@ -7,7 +7,7 @@ from aiogram import Bot
 from . import db, order_view
 from .config import config
 from .grizzly import grizzly
-from .handlers.balance import check_crypto
+from .handlers.balance import check_crypto, check_one
 
 log = logging.getLogger(__name__)
 
@@ -99,12 +99,19 @@ async def orders_loop(bot: Bot) -> None:
         await asyncio.sleep(5)
 
 
-async def crypto_loop(bot: Bot) -> None:
+async def payments_loop(bot: Bot) -> None:
+    """Проверяет неоплаченные счета CryptoBot, Cryptomus и ЮMoney и зачисляет оплаченные."""
     while True:
         try:
             payments = await db.pending_payments("crypto")
             for i in range(0, len(payments), 100):
                 await check_crypto(bot, payments[i:i + 100])
+            for method in ("cryptomus", "ym_card", "ym_wallet"):
+                for payment in await db.pending_payments(method):
+                    try:
+                        await check_one(bot, payment)
+                    except Exception:
+                        log.exception("payment %s", payment["id"])
         except Exception:
-            log.exception("crypto loop")
-        await asyncio.sleep(15)
+            log.exception("payments loop")
+        await asyncio.sleep(20)

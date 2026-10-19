@@ -284,9 +284,61 @@ TEXTS: dict[str, dict[str, str]] = {
               "[[money]] Balans: <b>{balance}</b>\n\n"
               "Töleg usulyny saýlaň.",
     },
-    "btn_pay_crypto": {"ru": "Криптовалюта", "en": "Cryptocurrency", "tk": "Kriptowalýuta"},
+    "btn_pay_ym_card": {"ru": "Карта: Мир, Visa, Mastercard", "en": "Card: Mir, Visa, Mastercard",
+                        "tk": "Karta: Mir, Visa, Mastercard"},
+    "btn_pay_ym_wallet": {"ru": "ЮMoney", "en": "YooMoney", "tk": "YooMoney"},
+    "btn_pay_cryptomus": {"ru": "Крипта: USDT, TON, BTC", "en": "Crypto: USDT, TON, BTC", "tk": "Kripto: USDT, TON, BTC"},
+    "btn_pay_crypto": {"ru": "CryptoBot", "en": "CryptoBot", "tk": "CryptoBot"},
     "btn_pay_stars": {"ru": "Telegram Stars", "en": "Telegram Stars", "tk": "Telegram Stars"},
     "btn_pay_card": {"ru": "Банковская карта", "en": "Bank card", "tk": "Bank kartasy"},
+    "choose_network": {
+        "ru": "[[crypto]] <b>ВЫБОР СЕТИ</b>\n\n"
+              "[[money]] Сумма: <b>{amount}</b>\n\n"
+              "Выберите монету и сеть, в которой будете отправлять.",
+        "en": "[[crypto]] <b>CHOOSE NETWORK</b>\n\n"
+              "[[money]] Amount: <b>{amount}</b>\n\n"
+              "Choose the coin and network you will send from.",
+        "tk": "[[crypto]] <b>TORY SAÝLAŇ</b>\n\n"
+              "[[money]] Mukdar: <b>{amount}</b>\n\n"
+              "Iberjek teňňäňizi we toryňyzy saýlaň.",
+    },
+    "cryptomus_invoice": {
+        "ru": "[[crypto]] <b>ОПЛАТА {coin}</b>\n\n"
+              "Отправьте ровно:\n<code>{pay_amount}</code> {currency}\n\n"
+              "На адрес ({network}):\n<code>{address}</code>\n\n"
+              "[[money]] Будет зачислено: <b>{amount}</b>\n"
+              "[[clock]] Счёт действует 1 час\n\n"
+              "[[warning]] Отправляйте только {currency} в сети {network}, иначе деньги потеряются.",
+        "en": "[[crypto]] <b>PAY WITH {coin}</b>\n\n"
+              "Send exactly:\n<code>{pay_amount}</code> {currency}\n\n"
+              "To the address ({network}):\n<code>{address}</code>\n\n"
+              "[[money]] You will get: <b>{amount}</b>\n"
+              "[[clock]] Valid for 1 hour\n\n"
+              "[[warning]] Send only {currency} on the {network} network, otherwise the funds will be lost.",
+        "tk": "[[crypto]] <b>{coin} BILEN TÖLEG</b>\n\n"
+              "Takyk şu mukdary iberiň:\n<code>{pay_amount}</code> {currency}\n\n"
+              "Şu salga ({network}):\n<code>{address}</code>\n\n"
+              "[[money]] Goşular: <b>{amount}</b>\n"
+              "[[clock]] Hasap 1 sagat hereket edýär\n\n"
+              "[[warning]] Diňe {network} torunda {currency} iberiň, ýogsa pul ýiter.",
+    },
+    "ym_invoice": {
+        "ru": "[[card]] <b>ОПЛАТА {method}</b>\n\n"
+              "[[money]] Сумма: <b>{amount}</b>\n\n"
+              "Нажмите «Оплатить» и завершите оплату на странице ЮMoney. "
+              "Баланс пополнится автоматически в течение минуты.",
+        "en": "[[card]] <b>PAY: {method}</b>\n\n"
+              "[[money]] Amount: <b>{amount}</b>\n\n"
+              "Tap «Pay» and complete the payment on the YooMoney page. "
+              "Your balance is topped up automatically within a minute.",
+        "tk": "[[card]] <b>TÖLEG: {method}</b>\n\n"
+              "[[money]] Mukdar: <b>{amount}</b>\n\n"
+              "«Töle» basyň we YooMoney sahypasynda tölegi tamamlaň. "
+              "Balans bir minudyň içinde awtomatik doldurylýar.",
+    },
+    "btn_copy_address": {"ru": "Скопировать адрес", "en": "Copy address", "tk": "Salgyny göçür"},
+    "btn_copy_amount": {"ru": "Скопировать сумму", "en": "Copy amount", "tk": "Mukdary göçür"},
+    "btn_pay_page": {"ru": "Страница оплаты", "en": "Payment page", "tk": "Töleg sahypasy"},
     "choose_amount": {
         "ru": "[[money]] <b>{method}</b>\n\n"
               "Выберите сумму или отправьте свою.\n"

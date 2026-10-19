@@ -47,6 +47,7 @@ FALLBACK = {
     "cancel": "❌",
     "done": "🏁",
     "refresh": "🔄",
+    "copy": "📋",
     "warning": "⚠️",
     "check": "☑️",
     "box": "📭",

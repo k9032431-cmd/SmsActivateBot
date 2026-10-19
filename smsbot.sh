@@ -35,6 +35,13 @@ case "${1:-help}" in
     logs)
         journalctl -u "$SERVICE" -f -n 100
         ;;
+    yoomoney)
+        need_root yoomoney
+        cd "$DIR"
+        "$DIR/venv/bin/python" -m bot.yoomoney_auth
+        systemctl restart "$SERVICE"
+        echo "✔ Бот перезапущен — оплата через ЮMoney включена"
+        ;;
     backup)
         need_root backup
         mkdir -p "$DIR/backups"
@@ -56,6 +63,7 @@ case "${1:-help}" in
   status    статус
   logs      логи в реальном времени (выход: Ctrl+C)
   backup    резервная копия базы данных
+  yoomoney  подключить кошелёк ЮMoney (оплата картами Мир, Visa, Mastercard)
 EOF
         ;;
 esac

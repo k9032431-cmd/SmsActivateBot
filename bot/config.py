@@ -21,6 +21,12 @@ class Config:
     cryptopay_testnet: bool = os.getenv("CRYPTOPAY_TESTNET", "0") == "1"
     # Токен платёжного провайдера из @BotFather (ЮKassa и т.п.) для оплаты картой в рублях.
     payment_provider_token: str = os.getenv("PAYMENT_PROVIDER_TOKEN", "")
+    # Cryptomus: оплата криптой на адрес в выбранной сети.
+    cryptomus_merchant_id: str = os.getenv("CRYPTOMUS_MERCHANT_ID", "")
+    cryptomus_api_key: str = os.getenv("CRYPTOMUS_API_KEY", "")
+    # ЮMoney: приём на кошелёк картой (Мир, Visa, Mastercard) или с кошелька ЮMoney.
+    yoomoney_wallet: str = os.getenv("YOOMONEY_WALLET", "")
+    yoomoney_token: str = os.getenv("YOOMONEY_TOKEN", "")
     bot_name: str = os.getenv("BOT_NAME", "SMS Number Bot")
     support_username: str = os.getenv("SUPPORT_USERNAME", "")
     channel_url: str = os.getenv("CHANNEL_URL", "")

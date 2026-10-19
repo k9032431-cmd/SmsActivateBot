@@ -9,7 +9,13 @@ from aiogram.types import CallbackQuery, LabeledPrice, Message, PreCheckoutQuery
 from .. import catalog, db
 from ..common import show
 from ..config import config
+from ..cryptomus import NETWORK_BY_CODE, NETWORKS, cryptomus
+from ..cryptomus import FAILED as CRYPTOMUS_FAILED
+from ..cryptomus import PAID as CRYPTOMUS_PAID
 from ..cryptopay import cryptopay
+from ..yoomoney import CARD as YM_CARD
+from ..yoomoney import WALLET as YM_WALLET
+from ..yoomoney import yoomoney
 from ..i18n import fmt_money, t
 from ..keyboards import BLUE, GREEN, btn, grid, kb
 from .start import home_btn
@@ -19,11 +25,16 @@ log = logging.getLogger(__name__)
 
 PRESETS = [100, 250, 500, 1000, 2500, 5000]
 MAX_TOPUP = 100_000
+# метод: (текст кнопки, эмодзи, цвет)
 METHODS = {
-    "crypto": ("btn_pay_crypto", "crypto"),
-    "stars": ("btn_pay_stars", "star"),
-    "card": ("btn_pay_card", "card"),
+    "ym_card": ("btn_pay_ym_card", "card", GREEN),
+    "ym_wallet": ("btn_pay_ym_wallet", "wallet", BLUE),
+    "card": ("btn_pay_card", "card", BLUE),
+    "cryptomus": ("btn_pay_cryptomus", "crypto", BLUE),
+    "crypto": ("btn_pay_crypto", "diamond", BLUE),
+    "stars": ("btn_pay_stars", "star", BLUE),
 }
+YM_TYPES = {"ym_card": YM_CARD, "ym_wallet": YM_WALLET}
 
 
 class Topup(StatesGroup):
@@ -33,6 +44,10 @@ class Topup(StatesGroup):
 def method_enabled(method: str) -> bool:
     if method == "crypto":
         return cryptopay.enabled
+    if method == "cryptomus":
+        return cryptomus.enabled
+    if method in YM_TYPES:
+        return yoomoney.enabled
     if method == "card":
         return bool(config.payment_provider_token)
     return method == "stars"
@@ -42,9 +57,8 @@ def method_enabled(method: str) -> bool:
 async def topup(call: CallbackQuery, user, lang, state: FSMContext):
     await state.clear()
     await call.answer()
-    styles = {"crypto": BLUE, "stars": GREEN, "card": BLUE}
-    buttons = [btn(t(lang, label), emoji, styles[m], cb=f"pm:{m}")
-               for m, (label, emoji) in METHODS.items() if method_enabled(m)]
+    buttons = [btn(t(lang, label), emoji, style, cb=f"pm:{m}")
+               for m, (label, emoji, style) in METHODS.items() if method_enabled(m)]
     await show(call, t(lang, "topup", balance=fmt_money(user["balance"])), kb(*buttons, btn(t(lang, "btn_back"), "back", cb="menu")))
 
 
@@ -53,7 +67,7 @@ async def choose_amount(call: CallbackQuery, lang, state: FSMContext):
     method = call.data.split(":")[1]
     await call.answer()
     if method not in METHODS or not method_enabled(method):
-        return await show(call, t(lang, "pay_unavailable"), kb(home_btn(lang)))
+        return await show(call, t(lang, "pay_unavailable"), kb(btn(t(lang, "btn_back"), "back", cb="topup")))
     await state.set_state(Topup.amount)
     await state.update_data(method=method)
     presets = [btn(f"{a} ₽", "money", GREEN, cb=f"pa:{method}:{a}") for a in PRESETS if a >= config.min_topup_rub]
@@ -66,7 +80,22 @@ async def amount_button(call: CallbackQuery, bot: Bot, lang, state: FSMContext):
     _, method, amount = call.data.split(":")
     await state.clear()
     await call.answer()
+    if method == "cryptomus":
+        return await show(call, *network_screen(lang, int(amount)))
     await create_payment(bot, call.from_user.id, lang, method, int(amount))
+
+
+def network_screen(lang, amount_rub: int):
+    buttons = [btn(label, cb=f"cn:{amount_rub}:{code}", style=BLUE) for code, label, _, _ in NETWORKS]
+    return (t(lang, "choose_network", amount=fmt_money(amount_rub * 100)),
+            kb(*grid(buttons, 2), btn(t(lang, "btn_back"), "back", cb="pm:cryptomus")))
+
+
+@router.callback_query(F.data.startswith("cn:"))
+async def network_chosen(call: CallbackQuery, bot: Bot, lang):
+    _, amount, code = call.data.split(":")
+    await call.answer()
+    await create_payment(bot, call.from_user.id, lang, "cryptomus", int(amount), network=code)
 
 
 @router.message(Topup.amount, F.text)
@@ -79,11 +108,16 @@ async def amount_text(message: Message, bot: Bot, lang, state: FSMContext):
         return await message.answer(t(lang, "bad_amount", min=config.min_topup_rub))
     method = (await state.get_data()).get("method")
     await state.clear()
+    if method == "cryptomus":
+        text, markup = network_screen(lang, amount)
+        return await message.answer(text, reply_markup=markup)
     await create_payment(bot, message.from_user.id, lang, method, amount)
 
 
-async def create_payment(bot: Bot, user_id: int, lang, method: str, amount_rub: int):
+async def create_payment(bot: Bot, user_id: int, lang, method: str, amount_rub: int, network: str | None = None):
     if method not in METHODS or not method_enabled(method):
+        return await bot.send_message(user_id, t(lang, "pay_unavailable"))
+    if method == "cryptomus" and network not in NETWORK_BY_CODE:
         return await bot.send_message(user_id, t(lang, "pay_unavailable"))
     amount_rub = max(config.min_topup_rub, min(MAX_TOPUP, amount_rub))
     amount = amount_rub * 100
@@ -101,6 +135,39 @@ async def create_payment(bot: Bot, user_id: int, lang, method: str, amount_rub: 
         await db.set_payment_external(payment_id, str(invoice["invoice_id"]), url)
         return await bot.send_message(user_id, t(lang, "crypto_invoice", amount=fmt_money(amount)), reply_markup=kb(
             btn(t(lang, "btn_pay"), "crypto", GREEN, url=url),
+            btn(t(lang, "btn_check_pay"), "refresh", BLUE, cb=f"pc:{payment_id}"),
+            back,
+        ))
+
+    if method == "cryptomus":
+        _, label, coin, net = NETWORK_BY_CODE[network]
+        try:
+            invoice = await cryptomus.create_invoice(amount_rub, f"pay{payment_id}", coin, net)
+        except Exception:
+            log.exception("cryptomus createInvoice")
+            return await bot.send_message(user_id, t(lang, "pay_unavailable"), reply_markup=kb(back))
+        await db.set_payment_external(payment_id, invoice["uuid"], invoice.get("url"))
+        pay_amount = invoice.get("payer_amount") or invoice.get("payment_amount") or "—"
+        currency = invoice.get("payer_currency") or coin
+        address = invoice.get("address")
+        rows = []
+        if address:
+            rows.append([btn(t(lang, "btn_copy_address"), "copy", BLUE, copy=address),
+                         btn(t(lang, "btn_copy_amount"), "money", BLUE, copy=str(pay_amount))])
+        if invoice.get("url"):
+            rows.append(btn(t(lang, "btn_pay_page"), "crypto", GREEN, url=invoice["url"]))
+        rows += [btn(t(lang, "btn_check_pay"), "refresh", BLUE, cb=f"pc:{payment_id}"), back]
+        text = t(lang, "cryptomus_invoice", coin=label, pay_amount=pay_amount, currency=currency,
+                 network=label.split(" · ")[-1], address=address or "—", amount=fmt_money(amount))
+        return await bot.send_message(user_id, text, reply_markup=kb(*rows))
+
+    if method in YM_TYPES:
+        label = f"pay{payment_id}"
+        url = await yoomoney.pay_url(amount_rub, label, YM_TYPES[method], description)
+        await db.set_payment_external(payment_id, label, url)
+        return await bot.send_message(user_id, t(lang, "ym_invoice", method=t(lang, METHODS[method][0]),
+                                                 amount=fmt_money(amount)), reply_markup=kb(
+            btn(t(lang, "btn_pay"), "card", GREEN, url=url),
             btn(t(lang, "btn_check_pay"), "refresh", BLUE, cb=f"pc:{payment_id}"),
             back,
         ))
@@ -167,12 +234,43 @@ async def check_crypto(bot: Bot, payments) -> None:
         if not payment:
             continue
         if item["status"] == "paid":
-            paid = await db.complete_payment(payment["id"])
-            if paid:
-                user = await db.get_user(paid["user_id"])
-                await notify_paid(bot, paid, user["lang"])
+            await _credit(bot, payment)
         elif item["status"] == "expired":
             await db.expire_payment(payment["id"])
+
+
+async def _credit(bot: Bot, payment) -> None:
+    paid = await db.complete_payment(payment["id"])
+    if paid:
+        user = await db.get_user(paid["user_id"])
+        await notify_paid(bot, paid, user["lang"])
+
+
+async def check_cryptomus(bot: Bot, payment) -> None:
+    info = await cryptomus.info(payment["external_id"])
+    status = info.get("payment_status") or info.get("status")
+    if status in CRYPTOMUS_PAID:
+        await _credit(bot, payment)
+    elif status in CRYPTOMUS_FAILED:
+        await db.expire_payment(payment["id"])
+
+
+async def check_yoomoney(bot: Bot, payment) -> None:
+    op = await yoomoney.find_payment(payment["external_id"])
+    # ЮMoney присылает сумму за вычетом своей комиссии, поэтому допускаем расхождение до 10%.
+    if op and float(op.get("amount", 0)) * 100 >= payment["amount"] * 0.9:
+        await _credit(bot, payment)
+    elif db.now() - payment["created_at"] > 86400:
+        await db.expire_payment(payment["id"])
+
+
+async def check_one(bot: Bot, payment) -> None:
+    if payment["method"] == "crypto":
+        await check_crypto(bot, [payment])
+    elif payment["method"] == "cryptomus":
+        await check_cryptomus(bot, payment)
+    elif payment["method"] in YM_TYPES:
+        await check_yoomoney(bot, payment)
 
 
 @router.callback_query(F.data.startswith("pc:"))
@@ -182,9 +280,9 @@ async def check_payment(call: CallbackQuery, bot: Bot, lang):
         return await call.answer()
     if payment["status"] == "pending" and payment["external_id"]:
         try:
-            await check_crypto(bot, [payment])
+            await check_one(bot, payment)
         except Exception:
-            log.exception("check crypto")
+            log.exception("check payment %s", payment["id"])
         payment = await db.get_payment(payment["id"])
     if payment["status"] == "paid":
         await call.answer()

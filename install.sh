@@ -127,6 +127,8 @@ if [ ! -f .env ]; then
     ask BOT_NAME "Название бота в меню" "SMS Number Bot"
     ask SUPPORT_USERNAME "Username поддержки без @ (необязательно)"
     ask CRYPTOPAY_TOKEN "Токен CryptoBot / Crypto Pay (необязательно)"
+    ask CRYPTOMUS_MERCHANT_ID "Cryptomus Merchant ID (необязательно)"
+    ask CRYPTOMUS_API_KEY "Cryptomus Payment API key (необязательно)"
     ask PAYMENT_PROVIDER_TOKEN "Токен оплаты картой из @BotFather (необязательно)"
 fi
 
@@ -181,4 +183,5 @@ cat <<'EOF'
   sudo smsbot logs      — смотреть логи
   sudo smsbot status    — статус
   sudo smsbot backup    — резервная копия базы
+  sudo smsbot yoomoney  — подключить ЮMoney (оплата картами Мир/Visa/Mastercard)
 EOF

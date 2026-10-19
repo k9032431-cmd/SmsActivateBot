@@ -37,7 +37,8 @@ def main_kb(lang: str):
     ]
     second = [btn(t(lang, "btn_orders"), "orders", BLUE, cb="orders")]
     if config.support_username:
-        second.append(btn(t(lang, "btn_support"), "support", BLUE, cb="support"))
+        second.append(btn(t(lang, "btn_support"), "support", BLUE,
+                          url=f"https://t.me/{config.support_username.lstrip('@')}"))
     rows.append(second)
     if config.channel_url:
         rows.append(btn(t(lang, "btn_channel"), "channel", BLUE, url=config.channel_url))
@@ -100,12 +101,3 @@ async def profile(call: CallbackQuery, user, lang: str | None):
         btn(t(lang, "btn_back"), "back", cb="menu"),
     ))
 
-
-@router.callback_query(F.data == "support")
-async def support(call: CallbackQuery, lang: str | None):
-    await call.answer()
-    contact = "@" + config.support_username.lstrip("@")
-    await show(call, t(lang, "support", contact=contact), kb(
-        btn(contact, "support", BLUE, url=f"https://t.me/{contact[1:]}"),
-        btn(t(lang, "btn_back"), "back", cb="menu"),
-    ))
