@@ -1,6 +1,10 @@
 """Справочники сервисов/стран и расчёт цен с наценкой."""
 import math
+import re
 import time
+from functools import lru_cache
+
+import pycountry
 
 from . import db
 from .config import config
@@ -10,7 +14,47 @@ from .grizzly import grizzly
 POPULAR = ["tg", "wa", "ig", "go", "fb", "tw", "ds", "lf", "vk", "ok",
            "ya", "ma", "mm", "am", "oi", "wb", "ts", "nf", "mt", "av"]
 
-# ID стран протокола sms-activate -> ISO-код (для флага).
+# Названия стран, которые справочник pycountry не узнаёт сам (как их пишет Grizzly).
+_NAME_ISO = {
+    "usa": "US", "united states": "US", "uk": "GB", "england": "GB", "russia": "RU", "iran": "IR",
+    "vietnam": "VN", "laos": "LA", "lao": "LA", "ivory coast": "CI", "cote d'ivoire": "CI",
+    "dr congo": "CD", "congo (dem. republic)": "CD", "democratic republic of the congo": "CD",
+    "republic of the congo": "CG", "congo": "CG", "south korea": "KR", "north korea": "KP", "korea": "KR",
+    "moldova": "MD", "syria": "SY", "tanzania": "TZ", "bolivia": "BO", "venezuela": "VE",
+    "macedonia": "MK", "north macedonia": "MK", "kosovo": "XK", "taiwan": "TW", "palestine": "PS",
+    "czech republic": "CZ", "swaziland": "SZ", "eswatini": "SZ", "cape verde": "CV", "brunei": "BN",
+    "brunei darussalam": "BN", "reunion": "RE", "macao": "MO", "macau": "MO", "hong kong": "HK",
+    "timor-leste": "TL", "east timor": "TL", "gambia": "GM", "bahamas": "BS", "salvador": "SV",
+    "el salvador": "SV", "saint vincent": "VC", "cayman islands": "KY", "benelux holland": "NL",
+    "holland": "NL", "netherlands antilles": "CW", "png": "PG", "ruanda": "RW", "turkey": "TR",
+    "micronesia": "FM", "saint kitts and nevis": "KN", "sint maarten": "SX", "vatican": "VA",
+    "guinea-bissau": "GW", "kyrgyzstan": "KG", "bosnia": "BA", "virgin islands": "VG",
+    "turks and caicos": "TC", "falkland islands": "FK", "burma": "MM", "myanmar": "MM", "libya": "LY",
+}
+
+
+@lru_cache(maxsize=None)
+def _iso_by_name(name: str) -> str | None:
+    n = " ".join(name.lower().replace("’", "'").split())
+    base = re.sub(r"\s*\(.*?\)\s*", " ", n).strip()  # «USA (virtual)» -> «usa»
+    for key in (n, base):
+        if key in _NAME_ISO:
+            return _NAME_ISO[key]
+    try:
+        return pycountry.countries.lookup(base).alpha_2
+    except LookupError:
+        pass
+    try:
+        return pycountry.countries.search_fuzzy(base)[0].alpha_2
+    except LookupError:
+        return None
+
+
+def _flag_from_iso(iso: str) -> str:
+    return "".join(chr(0x1F1E6 + ord(c) - ord("A")) for c in iso.upper())
+
+
+# Запасной вариант: ID стран протокола sms-activate -> ISO-код.
 _ISO = (
     "RU UA KZ CN PH MM ID MY KE TZ VN KG US IL HK PL GB MG CD NG MO EG IN IE KH LA HT CI GM RS YE ZA RO "
     "CO EE AZ CA MA GH AR UZ CM TD DE LT HR SE IQ NL LV AT BY TH SA MX TW ES IR DZ SI BD SN TR CZ LK PE "
@@ -27,8 +71,14 @@ _loaded_at = 0.0
 
 
 def flag(country_id: int) -> str:
+    """Флаг по названию страны из Grizzly; если название не распознано — по номеру страны."""
+    info = _countries.get(country_id)
+    for name in (info.get("eng"), info.get("rus")) if info else ():
+        iso = _iso_by_name(name) if name else None
+        if iso:
+            return _flag_from_iso(iso)
     if 0 <= country_id < len(_ISO):
-        return "".join(chr(0x1F1E6 + ord(c) - ord("A")) for c in _ISO[country_id])
+        return _flag_from_iso(_ISO[country_id])
     return "🌐"
 
 
