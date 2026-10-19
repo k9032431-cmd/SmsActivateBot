@@ -1,12 +1,24 @@
 """Премиум-эмодзи.
 
-У каждого эмодзи есть имя и обычный (запасной) символ. ID премиум-эмодзи задаётся
-админом командой /setemoji и хранится в БД. Пока ID не задан, показывается обычный эмодзи.
+У каждого эмодзи есть имя и обычный (запасной) символ. ID премиум-эмодзи задаёт админ:
+по одному (/setemoji), списком или целым паком (/emojipack). ID хранятся в БД.
+Пока ID не задан, показывается обычный эмодзи.
 """
 from . import db
 
 FALLBACK = {
+    # бренд и оформление
     "logo": "🐻",
+    "sparkle": "✨",
+    "crown": "👑",
+    "diamond": "💎",
+    "rocket": "🚀",
+    "lightning": "⚡",
+    "shield": "🛡",
+    "down": "👇",
+    "info": "ℹ️",
+    "bell": "🔔",
+    # меню
     "phone": "📱",
     "buy": "🛒",
     "wallet": "💰",
@@ -20,28 +32,57 @@ FALLBACK = {
     "home": "🏠",
     "search": "🔎",
     "fire": "🔥",
+    # покупка и заказ
+    "service": "🧩",
+    "globe": "🌍",
+    "price": "🏷",
+    "stock": "🔢",
+    "money": "💵",
+    "wait": "⏳",
+    "clock": "🕐",
+    "code": "🔑",
+    "sms": "💬",
+    "ok": "✅",
+    "cancel": "❌",
+    "done": "🏁",
+    "refresh": "🔄",
+    "warning": "⚠️",
+    "check": "☑️",
+    "box": "📭",
+    # оплата
     "star": "⭐",
     "crypto": "💎",
     "card": "💳",
-    "ok": "✅",
-    "cancel": "❌",
-    "wait": "⏳",
-    "code": "🔑",
-    "refresh": "🔄",
-    "sms": "💬",
-    "money": "💵",
-    "warning": "⚠️",
-    "globe": "🌍",
-    "admin": "👑",
-    "stats": "📊",
-    "broadcast": "📢",
-    "settings": "⚙️",
+    "gift": "🎁",
+    # профиль и админка
     "user": "👤",
     "id": "🆔",
-    "gift": "🎁",
-    "check": "☑️",
-    "box": "📭",
-    "done": "🏁",
+    "admin": "👑",
+    "stats": "📊",
+    "chart": "📈",
+    "broadcast": "📢",
+    "settings": "⚙️",
+    # логотипы сервисов на кнопках (svc_<код сервиса>)
+    "svc_tg": "✈️",
+    "svc_wa": "💚",
+    "svc_ig": "📸",
+    "svc_go": "🔍",
+    "svc_fb": "👥",
+    "svc_tw": "🐦",
+    "svc_ds": "🎮",
+    "svc_lf": "🎵",
+    "svc_vk": "🔵",
+    "svc_ok": "🟠",
+    "svc_ya": "🟡",
+    "svc_ma": "📧",
+    "svc_mm": "🪟",
+    "svc_am": "📦",
+    "svc_oi": "❤️",
+    "svc_wb": "💬",
+    "svc_ts": "💲",
+    "svc_nf": "🎬",
+    "svc_mt": "🕹",
+    "svc_av": "🏷",
 }
 
 _ids: dict[str, str] = {}
@@ -68,6 +109,15 @@ def icon(name: str) -> str | None:
 
 def plain(name: str) -> str:
     return FALLBACK.get(name, "")
+
+
+def _norm(char: str) -> str:
+    return char.replace("️", "")
+
+
+def match_names(char: str) -> list[str]:
+    """Имена, у которых обычный эмодзи совпадает с char (для автоподбора из пака)."""
+    return [name for name, fallback in FALLBACK.items() if _norm(fallback) == _norm(char)]
 
 
 def e(name: str) -> str:

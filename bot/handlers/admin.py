@@ -29,9 +29,12 @@ HELP = (
     "/setmarkup <code>2</code> — наценка (×2 = цена в 2 раза выше)\n"
     "/setusd <code>95</code> — курс USD→RUB (если баланс Grizzly в $)\n"
     "/setstar <code>1.8</code> — сколько ₽ стоит 1 ⭐\n"
-    "/emojis — список эмодзи бота\n"
-    "/setemoji <code>имя</code> <i>премиум-эмодзи</i> — поставить премиум-эмодзи\n"
-    "/delemoji <code>имя</code> — вернуть обычный эмодзи\n"
+    "\n<b>Премиум-эмодзи</b>\n"
+    "/emojis — все эмодзи бота и их имена\n"
+    "/emojipack <code>ссылка</code> — взять эмодзи из пака (t.me/addemoji/…), подбираются автоматически\n"
+    "/setemoji <code>имя</code> <i>эмодзи</i> — поставить один; можно списком, по строке на каждый:\n"
+    "<code>/setemoji buy</code> 🛒\n<code>wallet</code> 💰\n"
+    "/delemoji <code>имя</code> — вернуть обычный эмодзи (<code>/delemoji all</code> — все)\n"
 )
 
 
@@ -46,19 +49,20 @@ async def panel_text() -> str:
         g_text = f"{g_balance:.2f} {'$' if config.grizzly_currency == 'USD' else '₽'}"
     except Exception as exc:
         g_text = f"ошибка: {escape(str(exc))}"
+    e = emoji.e
     return (
-        f"{emoji.e('admin')} <b>Админ-панель</b>\n━━━━━━━━━━━━━━━\n"
-        f"{emoji.e('user')} Пользователей: <b>{s['users']}</b> (+{s['users_day']} за 24ч)\n"
-        f"{emoji.e('phone')} Продано номеров: <b>{s['orders']}</b> (+{s['orders_day']} за 24ч)\n"
-        f"{emoji.e('money')} Выручка: <b>{fmt_money(s['revenue'])}</b>\n"
-        f"{emoji.e('fire')} Прибыль: <b>{fmt_money(s['profit'])}</b> (+{fmt_money(s['profit_day'])} за 24ч)\n"
-        f"{emoji.e('topup')} Пополнений: <b>{fmt_money(s['deposits'])}</b>\n"
-        f"{emoji.e('wallet')} На балансах клиентов: <b>{fmt_money(s['balances'])}</b>\n"
-        f"━━━━━━━━━━━━━━━\n"
-        f"{emoji.e('logo')} Баланс Grizzly: <b>{g_text}</b>\n"
-        f"{emoji.e('settings')} Наценка: <b>×{await catalog.markup():g}</b> · "
-        f"1⭐ = {await catalog.star_rub():g} ₽"
-        + (f" · $1 = {await catalog.usd_rub():g} ₽" if config.grizzly_currency == "USD" else "")
+        f"{e('crown')} <b>Админ-панель</b> {e('sparkle')}\n\n"
+        f"<blockquote>{e('user')} Пользователи · <b>{s['users']}</b> <i>(+{s['users_day']} за 24ч)</i>\n"
+        f"{e('phone')} Продано номеров · <b>{s['orders']}</b> <i>(+{s['orders_day']} за 24ч)</i></blockquote>\n\n"
+        f"<blockquote>{e('money')} Выручка · <b>{fmt_money(s['revenue'])}</b>\n"
+        f"{e('chart')} Прибыль · <b>{fmt_money(s['profit'])}</b> <i>(+{fmt_money(s['profit_day'])} за 24ч)</i>\n"
+        f"{e('topup')} Пополнения · <b>{fmt_money(s['deposits'])}</b>\n"
+        f"{e('wallet')} На балансах клиентов · <b>{fmt_money(s['balances'])}</b></blockquote>\n\n"
+        f"<blockquote>{e('logo')} Баланс Grizzly · <b>{g_text}</b>\n"
+        f"{e('settings')} Наценка · <b>×{await catalog.markup():g}</b>\n"
+        f"{e('star')} 1 звезда · <b>{await catalog.star_rub():g} ₽</b>"
+        + (f"\n{e('money')} $1 · <b>{await catalog.usd_rub():g} ₽</b>" if config.grizzly_currency == "USD" else "")
+        + "</blockquote>"
     )
 
 
@@ -88,44 +92,119 @@ async def cb_help(call: CallbackQuery):
     await show(call, HELP, kb(btn("Назад", "back", cb="adm:panel")))
 
 
+def emojis_texts() -> list[str]:
+    """Список эмодзи, разбитый на сообщения (лимит Telegram — 4096 символов)."""
+    chunks, current = [], ""
+    for line in emojis_text().split("\n"):
+        if len(current) + len(line) > 3500:
+            chunks.append(current)
+            current = ""
+        current += line + "\n"
+    return chunks + [current]
+
+
 def emojis_text() -> str:
-    lines = ["<b>Эмодзи бота</b> (имя → как выглядит сейчас)\n"]
+    done = sum(1 for name in emoji.FALLBACK if emoji.icon(name))
+    lines = [f"{emoji.e('sparkle')} <b>Эмодзи бота</b> · премиум {done}/{len(emoji.FALLBACK)}\n"]
     for name in emoji.FALLBACK:
         mark = "⭐" if emoji.icon(name) else "▫️"
-        lines.append(f"{mark} <code>{name}</code> → {emoji.e(name)}")
-    lines.append("\n⭐ — стоит премиум-эмодзи. Поставить: <code>/setemoji имя</code> + премиум-эмодзи "
-                 "в том же сообщении. Пример: <code>/setemoji buy</code> 🛒")
+        lines.append(f"{mark} {emoji.e(name)} <code>{name}</code>")
+    lines.append("\n⭐ — стоит премиум-эмодзи.\n"
+                 "Быстро: <code>/emojipack ссылка_на_пак</code>\n"
+                 "Вручную: <code>/setemoji buy</code> + премиум-эмодзи")
     return "\n".join(lines)
 
 
 @router.message(Command("emojis"))
 async def cmd_emojis(message: Message):
-    await message.answer(emojis_text())
+    for chunk in emojis_texts():
+        await message.answer(chunk)
 
 
 @router.callback_query(F.data == "adm:emojis")
 async def cb_emojis(call: CallbackQuery):
     await call.answer()
-    await show(call, emojis_text(), kb(btn("Назад", "back", cb="adm:panel")))
+    for chunk in emojis_texts():
+        await call.message.answer(chunk)
+
+
+def _line_emojis(message: Message) -> list[tuple[str, str]]:
+    """[(имя, custom_emoji_id)] из сообщения вида «/setemoji имя 😀» с любым числом строк.
+    Можно вместо эмодзи указать числовой ID."""
+    text = message.text or ""
+    raw = text.encode("utf-16-le")
+    by_line: dict[int, str] = {}
+    for ent in message.entities or []:
+        if ent.type == "custom_emoji":
+            line_no = raw[:ent.offset * 2].decode("utf-16-le").count("\n")
+            by_line.setdefault(line_no, ent.custom_emoji_id)
+    pairs = []
+    for line_no, line in enumerate(text.split("\n")):
+        words = line.split()
+        if words and words[0].startswith("/"):
+            words = words[1:]
+        if not words:
+            continue
+        custom_id = by_line.get(line_no) or (words[1] if len(words) > 1 and words[1].isdigit() else None)
+        if custom_id:
+            pairs.append((words[0], custom_id))
+    return pairs
 
 
 @router.message(Command("setemoji"))
-async def cmd_setemoji(message: Message, command: CommandObject):
-    args = (command.args or "").split()
-    if not args or args[0] not in emoji.FALLBACK:
-        return await message.answer("Укажите имя из /emojis и премиум-эмодзи: <code>/setemoji buy</code> 🛒")
-    custom = [ent.custom_emoji_id for ent in (message.entities or []) if ent.type == "custom_emoji"]
-    custom_id = custom[0] if custom else (args[1] if len(args) > 1 and args[1].isdigit() else None)
-    if not custom_id:
-        return await message.answer("В сообщении нет премиум-эмодзи. Нужен Telegram Premium, "
-                                    "чтобы отправить его.")
-    await emoji.set_id(args[0], custom_id)
-    await message.answer(f"✅ <code>{args[0]}</code> → {emoji.e(args[0])} (ID <code>{custom_id}</code>)")
+async def cmd_setemoji(message: Message):
+    pairs = _line_emojis(message)
+    if not pairs:
+        return await message.answer(
+            "Отправьте имя из /emojis и премиум-эмодзи, например:\n<code>/setemoji buy</code> 🛒\n"
+            "Можно сразу несколько — по одному на строку. Для премиум-эмодзи нужен Telegram Premium.")
+    done, unknown = [], []
+    for name, custom_id in pairs:
+        if name in emoji.FALLBACK:
+            await emoji.set_id(name, custom_id)
+            done.append(f"{emoji.e(name)} <code>{name}</code>")
+        else:
+            unknown.append(escape(name))
+    text = "✅ Установлено:\n" + "\n".join(done) if done else "Ничего не установлено."
+    if unknown:
+        text += "\n\n⚠️ Неизвестные имена: " + ", ".join(unknown) + " (список: /emojis)"
+    await message.answer(text)
+
+
+@router.message(Command("emojipack"))
+async def cmd_emojipack(message: Message, command: CommandObject, bot: Bot):
+    """Берёт эмодзи из пака и ставит их тем местам бота, где обычный эмодзи совпадает."""
+    name = (command.args or "").strip().rstrip("/").split("/")[-1]
+    if not name:
+        return await message.answer("Пример: <code>/emojipack https://t.me/addemoji/НазваниеПака</code>")
+    try:
+        sticker_set = await bot.get_sticker_set(name)
+    except Exception as exc:
+        return await message.answer(f"Не удалось открыть пак: {escape(str(exc))}")
+    assigned: dict[str, str] = {}
+    for sticker in sticker_set.stickers:
+        if not sticker.custom_emoji_id or not sticker.emoji:
+            continue
+        for target in emoji.match_names(sticker.emoji):
+            if target not in assigned:
+                assigned[target] = sticker.custom_emoji_id
+    for target, custom_id in assigned.items():
+        await emoji.set_id(target, custom_id)
+    if not assigned:
+        return await message.answer("В этом паке не нашлось подходящих эмодзи. Попробуйте другой пак "
+                                    "или поставьте вручную через /setemoji.")
+    shown = " ".join(emoji.e(n) for n in assigned)
+    await message.answer(f"✅ Из пака <b>{escape(sticker_set.title)}</b> поставлено {len(assigned)} эмодзи:\n"
+                         f"{shown}\n\nОстальные можно поставить вручную — смотрите /emojis")
 
 
 @router.message(Command("delemoji"))
 async def cmd_delemoji(message: Message, command: CommandObject):
     name = (command.args or "").strip()
+    if name == "all":
+        for n in emoji.FALLBACK:
+            await emoji.set_id(n, None)
+        return await message.answer("✅ Все эмодзи сброшены на обычные")
     if name not in emoji.FALLBACK:
         return await message.answer("Укажите имя из /emojis")
     await emoji.set_id(name, None)

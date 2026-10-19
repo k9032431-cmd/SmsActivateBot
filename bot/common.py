@@ -2,11 +2,11 @@ from typing import Any, Awaitable, Callable
 
 from aiogram import BaseMiddleware
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message, TelegramObject
+from aiogram.types import CallbackQuery, InlineKeyboardMarkup, LinkPreviewOptions, Message, TelegramObject
 
 from . import db
 from .config import config
-from .i18n import t
+from .i18n import plain_t, t
 
 
 class UserMiddleware(BaseMiddleware):
@@ -24,23 +24,31 @@ class UserMiddleware(BaseMiddleware):
             if isinstance(event, Message):
                 await event.answer(t(user["lang"], "banned"))
             elif isinstance(event, CallbackQuery):
-                await event.answer(t(user["lang"], "banned").split(" ", 1)[-1], show_alert=True)
+                await event.answer(plain_t(user["lang"], "banned_short"), show_alert=True)
             return None
         return await handler(event, data)
 
 
-async def show(call: CallbackQuery, text: str, markup: InlineKeyboardMarkup | None = None) -> Message:
+def preview(banner: bool = False) -> LinkPreviewOptions:
+    """Баннер показывается как большое превью ссылки над текстом; иначе превью выключено."""
+    if banner and config.banner_url:
+        return LinkPreviewOptions(url=config.banner_url, prefer_large_media=True, show_above_text=True)
+    return LinkPreviewOptions(is_disabled=True)
+
+
+async def show(call: CallbackQuery, text: str, markup: InlineKeyboardMarkup | None = None,
+               banner: bool = False) -> Message:
     """Редактирует сообщение с кнопкой, а если нельзя (инвойс, старое сообщение) — шлёт новое."""
     msg = call.message
     try:
         if isinstance(msg, Message) and (msg.text or msg.html_text) and not msg.invoice:
-            result = await msg.edit_text(text, reply_markup=markup, disable_web_page_preview=True)
+            result = await msg.edit_text(text, reply_markup=markup, link_preview_options=preview(banner))
             return result if isinstance(result, Message) else msg
     except TelegramBadRequest as exc:
         if "message is not modified" in str(exc):
             return msg
     return await call.bot.send_message(call.from_user.id, text, reply_markup=markup,
-                                       disable_web_page_preview=True)
+                                       link_preview_options=preview(banner))
 
 
 def is_admin(user_id: int) -> bool:

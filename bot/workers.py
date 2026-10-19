@@ -34,6 +34,24 @@ async def _send_card(bot: Bot, order, reason: str | None = None, new_message: bo
         await bot.send_message(order["user_id"], text, reply_markup=markup)
 
 
+_shown_left: dict[int, int] = {}
+
+
+async def _tick(bot: Bot, order) -> None:
+    """Раз в минуту обновляет таймер и прогресс-бар в карточке ожидающего заказа."""
+    left = order_view.minutes_left(order)
+    if _shown_left.get(order["id"]) == left or not order["message_id"]:
+        return
+    _shown_left[order["id"]] = left
+    user = await db.get_user(order["user_id"])
+    text, markup = order_view.render(order, user["lang"])
+    try:
+        await bot.edit_message_text(text, chat_id=order["chat_id"], message_id=order["message_id"],
+                                    reply_markup=markup)
+    except Exception:
+        pass
+
+
 async def _process(bot: Bot, order) -> None:
     status, code = await grizzly.get_status(order["activation_id"])
     expired = db.now() - order["created_at"] > config.order_timeout_min * 60
@@ -42,6 +60,9 @@ async def _process(bot: Bot, order) -> None:
         await db.move_order(order["id"], (db.WAITING, db.GOT_CODE), db.GOT_CODE, code=code)
         await _send_card(bot, order, new_message=True)
         return
+
+    if order["status"] == db.WAITING and not expired:
+        await _tick(bot, order)
 
     if order["status"] == db.GOT_CODE:
         if expired:

@@ -3,18 +3,26 @@ from html import escape
 
 from . import catalog, db
 from .config import config
-from .i18n import fmt_money, t
+from .i18n import fmt_money, progress_bar, t
 from .keyboards import BLUE, GREEN, RED, btn, kb
 
 
+def minutes_left(order) -> int:
+    total = config.order_timeout_min * 60
+    return max(0, -(-(total - (db.now() - order["created_at"])) // 60))
+
+
 def render(order, lang: str | None, reason: str | None = None):
+    total = config.order_timeout_min * 60
+    elapsed = db.now() - order["created_at"]
     params = dict(
+        bar=progress_bar(1 - elapsed / total, 12),
+        left=minutes_left(order),
         phone=order["phone"],
         service=escape(catalog.service_name(order["service"])),
         country=escape(catalog.country_name(order["country"], lang)),
         price=fmt_money(order["price"]),
         code=escape(order["code"] or ""),
-        minutes=config.order_timeout_min,
     )
     home = btn(t(lang, "btn_home"), "home", cb="menu")
     status = order["status"]

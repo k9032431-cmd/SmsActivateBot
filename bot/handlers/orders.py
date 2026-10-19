@@ -5,14 +5,13 @@ from aiogram.types import CallbackQuery
 
 from .. import catalog, db, order_view
 from ..common import show
+from ..emoji import e
 from ..grizzly import grizzly
 from ..i18n import fmt_money, t
 from ..keyboards import BLUE, GREEN, btn, kb
 from .start import home_btn
 
 router = Router()
-
-STATUS_ICON = {db.WAITING: "⏳", db.GOT_CODE: "✅", db.DONE: "🏁", db.CANCELLED: "❌"}
 
 
 async def own_order(call: CallbackQuery):
@@ -39,18 +38,25 @@ async def orders_list(call: CallbackQuery, lang):
     if not orders:
         return await show(call, t(lang, "orders_empty"), kb(
             btn(t(lang, "btn_buy"), "buy", GREEN, cb="buy"), home_btn(lang)))
-    lines = [t(lang, "orders_title")]
+    blocks = [t(lang, "orders_title")]
     buttons = []
     for o in orders:
-        lines.append(
-            f"{STATUS_ICON[o['status']]} <code>+{o['phone']}</code> · {escape(catalog.service_name(o['service']))}"
-            f" · {fmt_money(o['price'])}\n      └ {t(lang, 'status_' + o['status'])}"
-            + (f" · <code>{escape(o['code'])}</code>" if o["code"] else "")
+        status_emoji = {db.WAITING: "wait", db.GOT_CODE: "ok", db.DONE: "done", db.CANCELLED: "cancel"}[o["status"]]
+        blocks.append(
+            f"<blockquote>{e('phone')} <code>+{o['phone']}</code>\n"
+            f"{e('service')} {escape(catalog.service_name(o['service']))} · {catalog.flag(o['country'])}"
+            f" · <b>{fmt_money(o['price'])}</b>\n"
+            f"{e(status_emoji)} <i>{t(lang, 'status_' + o['status'])}</i>"
+            + (f" · {e('code')} <code>{escape(o['code'])}</code>" if o["code"] else "")
+            + "</blockquote>"
         )
         if o["status"] in (db.WAITING, db.GOT_CODE):
             buttons.append(btn(f"+{o['phone']} · {catalog.service_name(o['service'])}", "phone", BLUE,
                                cb=f"o:{o['id']}"))
-    await show(call, "\n".join(lines), kb(*buttons, home_btn(lang)))
+    if buttons:
+        blocks.append(t(lang, "orders_active_hint"))
+    await show(call, "\n".join(blocks), kb(*buttons, btn(t(lang, "btn_buy"), "buy", GREEN, cb="buy"),
+                                           home_btn(lang)))
 
 
 @router.callback_query(F.data.startswith("o:"))

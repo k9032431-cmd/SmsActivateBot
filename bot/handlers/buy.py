@@ -6,11 +6,11 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 
-from .. import catalog, db, order_view
+from .. import catalog, db, emoji, order_view
 from ..common import show
 from ..config import config
 from ..grizzly import GrizzlyError, grizzly
-from ..i18n import fmt_money, t
+from ..i18n import fmt_money, plain_t, t
 from ..keyboards import BLUE, GREEN, btn, grid, kb
 from .start import home_btn
 
@@ -30,7 +30,8 @@ def back_btn(lang, cb: str):
 
 
 def services_kb(lang, items: list[tuple[str, str]], extra_rows: list | None = None):
-    buttons = [btn(name[:30], cb=f"svc:{code}:0", style=BLUE) for code, name in items]
+    buttons = [btn(name[:30], f"svc_{code}" if f"svc_{code}" in emoji.FALLBACK else None, BLUE,
+                   cb=f"svc:{code}:0") for code, name in items]
     return kb(*grid(buttons, 2), *(extra_rows or []))
 
 
@@ -116,7 +117,8 @@ async def countries(call: CallbackQuery, lang):
     ]
     rows.append(pager(lang, f"svc:{service}", page, pages))
     rows.append([back_btn(lang, "buy"), home_btn(lang)])
-    await show(call, t(lang, "choose_country", service=name, page=page + 1, pages=pages), kb(*rows))
+    await show(call, t(lang, "choose_country", service=name, page=page + 1, pages=pages, total=len(items),
+                       min_price=fmt_money(items[0][3])), kb(*rows))
 
 
 async def find_offer(service: str, country: int, fresh: bool = False):
@@ -143,7 +145,7 @@ async def confirm(call: CallbackQuery, user, lang):
             btn(t(lang, "btn_topup"), "topup", GREEN, cb="topup"),
             back_btn(lang, f"svc:{service}:0"),
         )
-        text += "\n\n" + t(lang, "not_enough", price=fmt_money(price), balance=fmt_money(user["balance"]))
+        text += t(lang, "not_enough", missing=fmt_money(price - user["balance"]))
     else:
         markup = kb(
             btn(t(lang, "btn_confirm_buy", price=fmt_money(price)), "buy", GREEN, cb=f"b:{service}:{country}"),
@@ -167,10 +169,10 @@ async def purchase(call: CallbackQuery, bot: Bot, lang):
     if not await db.charge(user_id, price):
         user = await db.get_user(user_id)
         await call.answer()
-        return await show(call, t(lang, "not_enough", price=fmt_money(price), balance=fmt_money(user["balance"])),
+        return await show(call, t(lang, "not_enough", missing=fmt_money(price - user["balance"])).strip(),
                           kb(btn(t(lang, "btn_topup"), "topup", GREEN, cb="topup"), back_btn(lang, "buy")))
 
-    await call.answer(t(lang, "buying").split(" ", 1)[-1])
+    await call.answer(plain_t(lang, "buying"))
     try:
         activation_id, phone = await grizzly.get_number(service, country, max_price=cost)
     except Exception as exc:

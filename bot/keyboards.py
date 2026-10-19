@@ -13,7 +13,7 @@ def btn(text: str, emoji: str | None = None, style: str | None = None, *,
         copy: str | None = None) -> InlineKeyboardButton:
     """Кнопка с цветом и иконкой. Если для эмодзи задан премиум ID — он ставится иконкой кнопки."""
     custom_id = icon(emoji) if emoji else None
-    if emoji and not custom_id:
+    if emoji and not custom_id and plain(emoji):
         text = f"{plain(emoji)} {text}"
     extra = {}
     if copy:

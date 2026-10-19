@@ -5,10 +5,10 @@ from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-from .. import db
-from ..common import show
+from .. import catalog, db
+from ..common import preview, show
 from ..config import config
-from ..i18n import LANGS, fmt_money, t
+from ..i18n import LANGS, fmt_money, plain_t, t
 from ..keyboards import BLUE, GREEN, btn, kb
 
 router = Router()
@@ -19,8 +19,10 @@ def lang_kb():
 
 
 def main_text(user, lang: str) -> str:
+    services, countries = catalog.counts()
     return t(lang, "main", bot_name=escape(config.bot_name), name=escape(user["full_name"] or "—"),
-             user_id=user["id"], balance=fmt_money(user["balance"]))
+             user_id=user["id"], balance=fmt_money(user["balance"]),
+             services=services or 500, countries=countries or 150)
 
 
 def main_kb(lang: str):
@@ -49,7 +51,7 @@ async def cmd_start(message: Message, user, lang: str | None, state: FSMContext)
         await message.answer(t(None, "choose_lang") + "\n" + "Choose your language · Dili saýlaň",
                              reply_markup=lang_kb())
         return
-    await message.answer(main_text(user, lang), reply_markup=main_kb(lang))
+    await message.answer(main_text(user, lang), reply_markup=main_kb(lang), link_preview_options=preview(True))
 
 
 @router.callback_query(F.data.startswith("lang:"))
@@ -59,8 +61,8 @@ async def set_lang(call: CallbackQuery):
         return await call.answer()
     await db.set_lang(call.from_user.id, lang)
     user = await db.get_user(call.from_user.id)
-    await call.answer(t(lang, "lang_set").split(" ", 1)[-1])
-    await show(call, main_text(user, lang), main_kb(lang))
+    await call.answer(plain_t(lang, "lang_set"))
+    await show(call, main_text(user, lang), main_kb(lang), banner=True)
 
 
 @router.callback_query(F.data == "lang_menu")
@@ -75,7 +77,7 @@ async def menu(call: CallbackQuery, user, lang: str | None, state: FSMContext):
     await call.answer()
     if not lang:
         return await show(call, t(None, "choose_lang"), lang_kb())
-    await show(call, main_text(user, lang), main_kb(lang))
+    await show(call, main_text(user, lang), main_kb(lang), banner=True)
 
 
 @router.callback_query(F.data == "support")

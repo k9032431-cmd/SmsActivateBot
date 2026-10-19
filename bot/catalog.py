@@ -52,6 +52,11 @@ async def services() -> dict[str, str]:
     return _services
 
 
+def counts() -> tuple[int, int]:
+    """(сервисов, стран), округлено вниз до десятков — для красивого «180+»."""
+    return len(_services) // 10 * 10, len(_countries) // 10 * 10
+
+
 def service_name(code: str) -> str:
     return _services.get(code, code)
 
