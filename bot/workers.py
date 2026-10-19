@@ -4,7 +4,8 @@ import logging
 
 from aiogram import Bot
 
-from . import db, order_view
+from . import catalog, db, order_view
+from .emoji import e
 from .config import config
 from .grizzly import grizzly
 from .handlers.balance import check_crypto, check_one
@@ -97,6 +98,45 @@ async def orders_loop(bot: Bot) -> None:
         except Exception:
             log.exception("orders loop")
         await asyncio.sleep(5)
+
+
+LOW_BALANCE_CHECK_SEC = 300
+LOW_BALANCE_REMIND_SEC = 3 * 3600
+
+
+async def _notify_admins(bot: Bot, text: str) -> None:
+    for admin in config.admin_ids:
+        try:
+            await bot.send_message(admin, text)
+        except Exception:
+            log.warning("cannot notify admin %s", admin)
+
+
+async def low_balance_loop(bot: Bot) -> None:
+    """Раз в 5 минут проверяет баланс Grizzly и предупреждает админов, если он ниже порога.
+    Пока баланс низкий — напоминает раз в 3 часа; после пополнения сообщает, что всё в порядке."""
+    alerted_at = 0.0
+    while True:
+        try:
+            balance = await grizzly.get_balance()
+            usd = await catalog.grizzly_balance_usd(balance)
+            threshold = await catalog.low_balance_usd()
+            shown = f"{balance:.2f} {'$' if config.grizzly_currency == 'USD' else '₽'}"
+            if usd < threshold:
+                if not alerted_at or db.now() - alerted_at >= LOW_BALANCE_REMIND_SEC:
+                    await _notify_admins(bot, (
+                        f"{e('warning')} <b>Низкий баланс Grizzly SMS</b>\n\n"
+                        f"{e('wallet')} Осталось: <b>{shown}</b>"
+                        + (f" (≈ ${usd:.2f})" if config.grizzly_currency != "USD" else "") + "\n"
+                        f"{e('bell')} Порог: <b>${threshold:g}</b>\n\n"
+                        "Пополните баланс на grizzlysms.com, иначе клиенты не смогут купить номера."))
+                    alerted_at = db.now()
+            elif alerted_at:
+                await _notify_admins(bot, f"{e('ok')} Баланс Grizzly пополнен: <b>{shown}</b>")
+                alerted_at = 0.0
+        except Exception:
+            log.exception("low balance check")
+        await asyncio.sleep(LOW_BALANCE_CHECK_SEC)
 
 
 async def payments_loop(bot: Bot) -> None:

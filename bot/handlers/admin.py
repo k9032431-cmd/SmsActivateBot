@@ -29,6 +29,7 @@ HELP = (
     "/setmarkup <code>2</code> — наценка (×2 = цена в 2 раза выше)\n"
     "/setusd <code>95</code> — курс USD→RUB (если баланс Grizzly в $)\n"
     "/setstar <code>1.8</code> — сколько ₽ стоит 1 ⭐\n"
+    "/setlowbalance <code>1</code> — предупреждать, когда баланс Grizzly ниже $1\n"
     "\n<b>Баннер главного меню</b>\n"
     "/setbanner — отправьте фото или GIF с подписью /setbanner (или ответьте этой командой на фото)\n"
     "/delbanner — вернуть баннер, который рисует бот\n"
@@ -63,6 +64,7 @@ async def panel_text() -> str:
         f"{e('topup')} Пополнения: <b>{fmt_money(s['deposits'])}</b>\n"
         f"{e('wallet')} На балансах клиентов: <b>{fmt_money(s['balances'])}</b>\n\n"
         f"{e('logo')} Баланс Grizzly: <b>{g_text}</b>\n"
+        f"{e('bell')} Предупреждение при балансе ниже: <b>${await catalog.low_balance_usd():g}</b>\n"
         f"{e('settings')} Наценка: <b>×{await catalog.markup():g}</b>\n"
         f"{e('star')} 1 звезда: <b>{await catalog.star_rub():g} ₽</b>"
         + (f"\n{e('money')} $1: <b>{await catalog.usd_rub():g} ₽</b>" if config.grizzly_currency == "USD" else "")
@@ -343,6 +345,11 @@ async def cmd_markup(message: Message, command: CommandObject):
 @router.message(Command("setusd"))
 async def cmd_usd(message: Message, command: CommandObject):
     await _set_number(message, command, "usd_rub", "Курс $1 =")
+
+
+@router.message(Command("setlowbalance"))
+async def cmd_lowbalance(message: Message, command: CommandObject):
+    await _set_number(message, command, "low_balance_usd", "Предупреждать при балансе Grizzly ниже $")
 
 
 @router.message(Command("setstar"))

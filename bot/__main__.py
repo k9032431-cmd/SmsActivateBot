@@ -37,7 +37,8 @@ async def main() -> None:
 
     await bot.set_my_commands([BotCommand(command="start", description="Main menu · Главное меню")])
     tasks = [asyncio.create_task(workers.orders_loop(bot)),
-             asyncio.create_task(workers.payments_loop(bot))]
+             asyncio.create_task(workers.payments_loop(bot)),
+             asyncio.create_task(workers.low_balance_loop(bot))]
     try:
         await dp.start_polling(bot)
     finally:

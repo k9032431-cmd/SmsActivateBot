@@ -139,6 +139,15 @@ async def usd_rub() -> float:
     return float(await db.get_setting("usd_rub", str(config.default_usd_rub)))
 
 
+async def low_balance_usd() -> float:
+    """Порог уведомления о низком балансе Grizzly, в долларах."""
+    return float(await db.get_setting("low_balance_usd", "1"))
+
+
+async def grizzly_balance_usd(balance: float) -> float:
+    return balance if config.grizzly_currency == "USD" else balance / await usd_rub()
+
+
 async def star_rub() -> float:
     return float(await db.get_setting("star_rub", str(config.default_star_rub)))
 
