@@ -36,28 +36,41 @@ NO_PREVIEW = LinkPreviewOptions(is_disabled=True)
 log = logging.getLogger(__name__)
 
 
+def _auto_tag() -> str:
+    # file_id в Telegram привязан к боту, поэтому при смене токена баннер загружается заново.
+    bot_id = config.bot_token.split(":", 1)[0]
+    return hashlib.md5(f"{bot_id}:{config.bot_name}".encode()).hexdigest()[:8]
+
+
 async def _banner_media() -> tuple[str, str | None]:
     """(тип, file_id) баннера: свой от админа (/setbanner) или нарисованный ботом."""
     kind = await db.get_setting("banner_type")
     file_id = await db.get_setting("banner_file_id")
     if kind and file_id:
         return kind, file_id
-    tag = hashlib.md5(config.bot_name.encode()).hexdigest()[:8]
-    return "auto", await db.get_setting(f"banner_auto:{tag}")
+    return "auto", await db.get_setting(f"banner_auto:{_auto_tag()}")
 
 
 async def send_banner(bot: Bot, chat_id: int, caption: str, markup: InlineKeyboardMarkup | None) -> Message:
     kind, file_id = await _banner_media()
-    if kind == "animation":
-        return await bot.send_animation(chat_id, file_id, caption=caption, reply_markup=markup)
-    if kind == "photo" or file_id:
-        return await bot.send_photo(chat_id, file_id, caption=caption, reply_markup=markup)
+    try:
+        if kind == "animation":
+            return await bot.send_animation(chat_id, file_id, caption=caption, reply_markup=markup)
+        if file_id:
+            return await bot.send_photo(chat_id, file_id, caption=caption, reply_markup=markup)
+    except TelegramBadRequest as exc:
+        # Обычно это file_id от другого бота (сменили токен) — забываем его и рисуем баннер заново.
+        log.warning("banner file_id rejected, falling back to generated banner: %s", exc)
+        if kind == "auto":
+            await db.del_setting(f"banner_auto:{_auto_tag()}")
+        else:
+            await db.del_setting("banner_type")
+            await db.del_setting("banner_file_id")
     # Первый показ: рисуем баннер и запоминаем file_id, дальше Telegram отдаёт его из кэша.
     image = BufferedInputFile(banner.render(config.bot_name), "banner.jpg")
     msg = await bot.send_photo(chat_id, image, caption=caption, reply_markup=markup)
     if msg.photo:
-        tag = hashlib.md5(config.bot_name.encode()).hexdigest()[:8]
-        await db.set_setting(f"banner_auto:{tag}", msg.photo[-1].file_id)
+        await db.set_setting(f"banner_auto:{_auto_tag()}", msg.photo[-1].file_id)
     return msg
 
 
