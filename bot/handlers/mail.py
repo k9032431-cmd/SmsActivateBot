@@ -19,7 +19,7 @@ from ..keyboards import BLUE, GREEN, btn, kb
 router = Router()
 log = logging.getLogger(__name__)
 
-DEFAULT_PRICES = {"10min": 5, "1hour": 10, "1day": 20, "permanent": 50}  # ₽
+DEFAULT_PRICES = {"10min": 10, "1hour": 20, "1day": 40, "permanent": 100}  # ₽
 TIER_SECONDS = {"10min": 600, "1hour": 3600, "1day": 86400, "permanent": 60 * 86400}
 
 
