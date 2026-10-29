@@ -403,6 +403,111 @@ TEXTS: dict[str, dict[str, str]] = {
         "tk": "[[cancel]] Giriş çäklendirildi. Goldaw bilen habarlaşyň.",
     },
     "banned_short": {"ru": "Доступ ограничен", "en": "Access restricted", "tk": "Giriş çäklendirildi"},
+    "btn_mail": {"ru": "Временная почта", "en": "Temp mail", "tk": "Wagtlaýyn poçta"},
+    "btn_refresh": {"ru": "Обновить", "en": "Refresh", "tk": "Täzele"},
+    "btn_my_mails": {"ru": "Мои почты", "en": "My mailboxes", "tk": "Poçtalarym"},
+    "btn_inbox": {"ru": "Входящие", "en": "Inbox", "tk": "Gelen hatlar"},
+    "btn_copy_mail": {"ru": "Скопировать адрес", "en": "Copy address", "tk": "Salgyny göçür"},
+    "tier_10min": {"ru": "10 минут", "en": "10 minutes", "tk": "10 minut"},
+    "tier_1hour": {"ru": "1 час", "en": "1 hour", "tk": "1 sagat"},
+    "tier_1day": {"ru": "1 день", "en": "1 day", "tk": "1 gün"},
+    "tier_permanent": {"ru": "60 дней", "en": "60 days", "tk": "60 gün"},
+    "mail_menu": {
+        "ru": "[[mail]] <b>ВРЕМЕННАЯ ПОЧТА</b>\n\n"
+              "Одноразовый e-mail для регистраций и кодов подтверждения.\n\n"
+              "[[ok]] Адрес выдаётся сразу\n"
+              "[[ok]] Письма приходят прямо в бот\n"
+              "[[ok]] Коды из писем — с кнопкой «Скопировать»\n\n"
+              "Выберите срок действия:",
+        "en": "[[mail]] <b>TEMP MAIL</b>\n\n"
+              "A disposable e-mail for sign-ups and verification codes.\n\n"
+              "[[ok]] Address is issued instantly\n"
+              "[[ok]] Emails arrive right in the bot\n"
+              "[[ok]] Codes from emails come with a «Copy» button\n\n"
+              "Choose how long it should last:",
+        "tk": "[[mail]] <b>WAGTLAÝYN POÇTA</b>\n\n"
+              "Hasaba durmak we tassyklama kodlary üçin bir gezeklik e-mail.\n\n"
+              "[[ok]] Salgy derrew berilýär\n"
+              "[[ok]] Hatlar göni bota gelýär\n"
+              "[[ok]] Hatlardaky kodlar «Göçür» düwmesi bilen\n\n"
+              "Möhletini saýlaň:",
+    },
+    "mail_card": {
+        "ru": "[[mail]] <b>ВАША ПОЧТА</b>\n\n"
+              "<code>{address}</code>\n\n"
+              "[[clock]] Действует до: <b>{expires}</b>\n"
+              "[[inbox]] Писем: <b>{count}</b>\n\n"
+              "Новые письма придут сюда автоматически.",
+        "en": "[[mail]] <b>YOUR MAILBOX</b>\n\n"
+              "<code>{address}</code>\n\n"
+              "[[clock]] Valid until: <b>{expires}</b>\n"
+              "[[inbox]] Emails: <b>{count}</b>\n\n"
+              "New emails will arrive here automatically.",
+        "tk": "[[mail]] <b>POÇTAŇYZ</b>\n\n"
+              "<code>{address}</code>\n\n"
+              "[[clock]] Möhleti: <b>{expires}</b> çenli\n"
+              "[[inbox]] Hatlar: <b>{count}</b>\n\n"
+              "Täze hatlar şu ýere awtomatik geler.",
+    },
+    "mail_expired": {
+        "ru": "[[mail]] <b>ПОЧТА ИСТЕКЛА</b>\n\n<code>{address}</code>\n\n[[inbox]] Писем было: <b>{count}</b>",
+        "en": "[[mail]] <b>MAILBOX EXPIRED</b>\n\n<code>{address}</code>\n\n[[inbox]] Emails received: <b>{count}</b>",
+        "tk": "[[mail]] <b>POÇTANYŇ MÖHLETI GUTARDY</b>\n\n<code>{address}</code>\n\n[[inbox]] Gelen hatlar: <b>{count}</b>",
+    },
+    "mail_new": {
+        "ru": "[[inbox]] <b>НОВОЕ ПИСЬМО</b>\n\n"
+              "[[mail]] Кому: <code>{address}</code>\n"
+              "[[user]] От: {sender}\n"
+              "[[info]] Тема: <b>{subject}</b>{code_line}\n\n"
+              "{body}",
+        "en": "[[inbox]] <b>NEW EMAIL</b>\n\n"
+              "[[mail]] To: <code>{address}</code>\n"
+              "[[user]] From: {sender}\n"
+              "[[info]] Subject: <b>{subject}</b>{code_line}\n\n"
+              "{body}",
+        "tk": "[[inbox]] <b>TÄZE HAT</b>\n\n"
+              "[[mail]] Kime: <code>{address}</code>\n"
+              "[[user]] Kimden: {sender}\n"
+              "[[info]] Tema: <b>{subject}</b>{code_line}\n\n"
+              "{body}",
+    },
+    "mail_code_line": {
+        "ru": "\n[[code]] Код: <code>{code}</code>",
+        "en": "\n[[code]] Code: <code>{code}</code>",
+        "tk": "\n[[code]] Kod: <code>{code}</code>",
+    },
+    "inbox_title": {
+        "ru": "[[inbox]] <b>ВХОДЯЩИЕ</b> · <code>{address}</code>\n",
+        "en": "[[inbox]] <b>INBOX</b> · <code>{address}</code>\n",
+        "tk": "[[inbox]] <b>GELEN HATLAR</b> · <code>{address}</code>\n",
+    },
+    "inbox_empty": {
+        "ru": "\nПисем пока нет. Как только придёт письмо — бот пришлёт его сюда.",
+        "en": "\nNo emails yet. As soon as one arrives, the bot will send it here.",
+        "tk": "\nEntek hat ýok. Hat gelen badyna bot ony şu ýere iberer.",
+    },
+    "my_mails_title": {
+        "ru": "[[mail]] <b>МОИ ПОЧТЫ</b>\n",
+        "en": "[[mail]] <b>MY MAILBOXES</b>\n",
+        "tk": "[[mail]] <b>POÇTALARYM</b>\n",
+    },
+    "my_mails_empty": {
+        "ru": "[[mail]] <b>МОИ ПОЧТЫ</b>\n\nЗдесь пока пусто.",
+        "en": "[[mail]] <b>MY MAILBOXES</b>\n\nNothing here yet.",
+        "tk": "[[mail]] <b>POÇTALARYM</b>\n\nEntek hiç zat ýok.",
+    },
+    "mail_active": {"ru": "активна", "en": "active", "tk": "işjeň"},
+    "mail_expired_short": {"ru": "истекла", "en": "expired", "tk": "möhleti gutardy"},
+    "mail_error": {
+        "ru": "[[warning]] Не удалось создать почту, деньги не списаны. Попробуйте через минуту.",
+        "en": "[[warning]] Couldn't create a mailbox, you were not charged. Try again in a minute.",
+        "tk": "[[warning]] Poçta döredip bolmady, pul alynmady. Bir minutdan synanyşyň.",
+    },
+    "mail_not_enough": {
+        "ru": "[[warning]] Не хватает <b>{missing}</b> — пополните баланс.",
+        "en": "[[warning]] You need <b>{missing}</b> more — top up your balance.",
+        "tk": "[[warning]] <b>{missing}</b> ýetmeýär — balansy dolduryň.",
+    },
     "support": {
         "ru": "[[support]] <b>ПОДДЕРЖКА</b>\n\nОтветим на любые вопросы: {contact}",
         "en": "[[support]] <b>SUPPORT</b>\n\nWe answer any questions: {contact}",

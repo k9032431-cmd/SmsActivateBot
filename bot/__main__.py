@@ -10,10 +10,11 @@ from . import catalog, db, emoji, workers
 from .common import UserMiddleware
 from .config import config
 from .cryptomus import cryptomus
+from .boomlify import boomlify
 from .cryptopay import cryptopay
 from .grizzly import grizzly
 from .yoomoney import yoomoney
-from .handlers import admin, balance, buy, orders, start
+from .handlers import admin, balance, buy, mail, orders, start
 
 
 async def main() -> None:
@@ -33,12 +34,14 @@ async def main() -> None:
     for observer in (dp.message, dp.callback_query, dp.pre_checkout_query):
         observer.outer_middleware(UserMiddleware())
     # Порядок важен: buy последним — в нём «любой текст = поиск сервиса».
-    dp.include_routers(admin.router, start.router, balance.router, orders.router, buy.router)
+    dp.include_routers(admin.router, start.router, balance.router, orders.router, mail.router, buy.router)
 
     await bot.set_my_commands([BotCommand(command="start", description="Main menu · Главное меню")])
     tasks = [asyncio.create_task(workers.orders_loop(bot)),
              asyncio.create_task(workers.payments_loop(bot)),
              asyncio.create_task(workers.low_balance_loop(bot))]
+    if boomlify.enabled:
+        tasks.append(asyncio.create_task(workers.mail_loop(bot)))
     try:
         await dp.start_polling(bot)
     finally:
@@ -48,6 +51,7 @@ async def main() -> None:
         await cryptopay.close()
         await cryptomus.close()
         await yoomoney.close()
+        await boomlify.close()
         await db.close()
         await bot.session.close()
 

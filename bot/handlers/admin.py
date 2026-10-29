@@ -29,6 +29,7 @@ HELP = (
     "/setmarkup <code>2</code> — наценка (×2 = цена в 2 раза выше)\n"
     "/setusd <code>95</code> — курс USD→RUB (если баланс Grizzly в $)\n"
     "/setstar <code>1.8</code> — сколько ₽ стоит 1 ⭐\n"
+    "/setmailprice <code>1hour 10</code> — цена почты в ₽ (10min, 1hour, 1day, permanent)\n"
     "/setlowbalance <code>1</code> — предупреждать, когда баланс Grizzly ниже $1\n"
     "\n<b>Баннер главного меню</b>\n"
     "/setbanner — отправьте фото или GIF с подписью /setbanner (или ответьте этой командой на фото)\n"
@@ -58,7 +59,8 @@ async def panel_text() -> str:
     return (
         f"{e('crown')} <b>АДМИН-ПАНЕЛЬ</b>\n\n"
         f"{e('user')} Пользователи: <b>{s['users']}</b> <i>(+{s['users_day']} за 24ч)</i>\n"
-        f"{e('phone')} Продано номеров: <b>{s['orders']}</b> <i>(+{s['orders_day']} за 24ч)</i>\n\n"
+        f"{e('phone')} Продано номеров: <b>{s['orders']}</b> <i>(+{s['orders_day']} за 24ч)</i>\n"
+        f"{e('mail')} Продано почт: <b>{s['mails']}</b> на <b>{fmt_money(s['mails_revenue'])}</b>\n\n"
         f"{e('money')} Выручка: <b>{fmt_money(s['revenue'])}</b>\n"
         f"{e('chart')} Прибыль: <b>{fmt_money(s['profit'])}</b> <i>(+{fmt_money(s['profit_day'])} за 24ч)</i>\n"
         f"{e('topup')} Пополнения: <b>{fmt_money(s['deposits'])}</b>\n"
@@ -345,6 +347,20 @@ async def cmd_markup(message: Message, command: CommandObject):
 @router.message(Command("setusd"))
 async def cmd_usd(message: Message, command: CommandObject):
     await _set_number(message, command, "usd_rub", "Курс $1 =")
+
+
+@router.message(Command("setmailprice"))
+async def cmd_mailprice(message: Message, command: CommandObject):
+    from .mail import DEFAULT_PRICES, price
+    try:
+        tier, value = (command.args or "").split()
+        value = float(value.replace(",", "."))
+        assert tier in DEFAULT_PRICES and value > 0
+    except (ValueError, AssertionError):
+        lines = [f"<code>{t}</code> — {fmt_money(await price(t))}" for t in DEFAULT_PRICES]
+        return await message.answer("Пример: <code>/setmailprice 1hour 10</code>\n\nСейчас:\n" + "\n".join(lines))
+    await db.set_setting(f"mail_price_{tier}", str(value))
+    await message.answer(f"{emoji.e('ok')} Почта {tier}: <b>{fmt_money(round(value * 100))}</b>")
 
 
 @router.message(Command("setlowbalance"))

@@ -27,6 +27,8 @@ class Config:
     # ЮMoney: приём на кошелёк картой (Мир, Visa, Mastercard) или с кошелька ЮMoney.
     yoomoney_wallet: str = os.getenv("YOOMONEY_WALLET", "")
     yoomoney_token: str = os.getenv("YOOMONEY_TOKEN", "")
+    # Boomlify: временная почта. Ключ: boomlify.com → кабинет → API keys.
+    boomlify_api_key: str = os.getenv("BOOMLIFY_API_KEY", "")
     bot_name: str = os.getenv("BOT_NAME", "SMS Number Bot")
     support_username: str = os.getenv("SUPPORT_USERNAME", "")
     channel_url: str = os.getenv("CHANNEL_URL", "")

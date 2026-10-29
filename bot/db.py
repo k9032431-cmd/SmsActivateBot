@@ -44,6 +44,23 @@ CREATE TABLE IF NOT EXISTS payments (
     created_at   INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS payments_status ON payments(status);
+CREATE TABLE IF NOT EXISTS mails (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL,
+    mail_id     TEXT NOT NULL,
+    address     TEXT NOT NULL,
+    tier        TEXT NOT NULL,
+    price       INTEGER NOT NULL,
+    expires_at  INTEGER NOT NULL,
+    created_at  INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS mails_user ON mails(user_id);
+CREATE INDEX IF NOT EXISTS mails_expires ON mails(expires_at);
+CREATE TABLE IF NOT EXISTS mail_seen (
+    mail      INTEGER NOT NULL,
+    msg_id    TEXT NOT NULL,
+    PRIMARY KEY (mail, msg_id)
+);
 CREATE TABLE IF NOT EXISTS settings (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -271,6 +288,42 @@ async def settings_with_prefix(prefix: str) -> dict[str, str]:
         return {r[0][len(prefix):]: r[1] for r in await cur.fetchall()}
 
 
+# ---------- mails ----------
+
+async def create_mail(user_id: int, mail_id: str, address: str, tier: str, price: int, expires_at: int) -> int:
+    cur = await db().execute(
+        "INSERT INTO mails (user_id, mail_id, address, tier, price, expires_at, created_at) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (user_id, mail_id, address, tier, price, expires_at, now()),
+    )
+    await db().commit()
+    return cur.lastrowid
+
+
+async def get_mail(mail_row: int) -> aiosqlite.Row | None:
+    async with db().execute("SELECT * FROM mails WHERE id = ?", (mail_row,)) as cur:
+        return await cur.fetchone()
+
+
+async def user_mails(user_id: int, limit: int = 10) -> list[aiosqlite.Row]:
+    async with db().execute(
+        "SELECT * FROM mails WHERE user_id = ? ORDER BY id DESC LIMIT ?", (user_id, limit)
+    ) as cur:
+        return await cur.fetchall()
+
+
+async def active_mails() -> list[aiosqlite.Row]:
+    async with db().execute("SELECT * FROM mails WHERE expires_at > ?", (now(),)) as cur:
+        return await cur.fetchall()
+
+
+async def mark_seen(mail_row: int, msg_id: str) -> bool:
+    """True, если письмо новое (раньше не показывали)."""
+    cur = await db().execute("INSERT OR IGNORE INTO mail_seen (mail, msg_id) VALUES (?, ?)", (mail_row, msg_id))
+    await db().commit()
+    return cur.rowcount > 0
+
+
 # ---------- stats ----------
 
 async def stats() -> dict:
@@ -287,6 +340,8 @@ async def stats() -> dict:
         "orders_day": await one(
             "SELECT COUNT(*) FROM orders WHERE status IN ('got_code', 'done') AND created_at >= ?", day_ago),
         "revenue": await one("SELECT SUM(price) FROM orders WHERE status IN ('got_code', 'done')"),
+        "mails": await one("SELECT COUNT(*) FROM mails"),
+        "mails_revenue": await one("SELECT SUM(price) FROM mails"),
         "profit": await one("SELECT SUM(price - cost) FROM orders WHERE status IN ('got_code', 'done')"),
         "profit_day": await one(
             "SELECT SUM(price - cost) FROM orders WHERE status IN ('got_code', 'done') AND created_at >= ?",

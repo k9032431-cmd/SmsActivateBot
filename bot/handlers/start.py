@@ -8,6 +8,7 @@ from aiogram.types import CallbackQuery, Message
 
 from .. import catalog, db
 from ..common import send_banner, show
+from ..boomlify import boomlify
 from ..config import config
 from ..i18n import LANGS, fmt_money, plain_t, t
 from ..keyboards import BLUE, GREEN, btn, kb
@@ -32,6 +33,10 @@ def main_text(user, lang: str) -> str:
 def main_kb(lang: str):
     rows = [
         btn(t(lang, "btn_buy"), "buy", GREEN, cb="buy"),
+    ]
+    if boomlify.enabled:
+        rows.append(btn(t(lang, "btn_mail"), "mail", GREEN, cb="mail"))
+    rows += [
         [btn(t(lang, "btn_profile"), "user", BLUE, cb="profile"),
          btn(t(lang, "btn_topup"), "topup", BLUE, cb="topup")],
     ]

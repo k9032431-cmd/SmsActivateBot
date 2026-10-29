@@ -7,7 +7,9 @@ from aiogram import Bot
 from . import catalog, db, order_view
 from .emoji import e
 from .config import config
+from .boomlify import boomlify
 from .grizzly import grizzly
+from .handlers.mail import message_view
 from .handlers.balance import check_crypto, check_one
 
 log = logging.getLogger(__name__)
@@ -137,6 +139,32 @@ async def low_balance_loop(bot: Bot) -> None:
         except Exception:
             log.exception("low balance check")
         await asyncio.sleep(LOW_BALANCE_CHECK_SEC)
+
+
+async def mail_loop(bot: Bot) -> None:
+    """Каждые 30 секунд проверяет активные почты и пересылает клиентам новые письма."""
+    while True:
+        try:
+            for mail in await db.active_mails():
+                try:
+                    msgs = await boomlify.messages(mail["mail_id"])
+                except Exception as exc:
+                    log.warning("mail %s: %r", mail["id"], exc)
+                    continue
+                if not msgs:
+                    continue
+                user = await db.get_user(mail["user_id"])
+                for msg in reversed(msgs):  # старые первыми
+                    if await db.mark_seen(mail["id"], str(msg.get("id"))):
+                        text, markup = message_view(mail, msg, user["lang"])
+                        try:
+                            await bot.send_message(mail["user_id"], text, reply_markup=markup)
+                        except Exception:
+                            log.exception("send mail %s", mail["id"])
+                await asyncio.sleep(1)  # бережём лимит запросов Boomlify
+        except Exception:
+            log.exception("mail loop")
+        await asyncio.sleep(30)
 
 
 async def payments_loop(bot: Bot) -> None:
