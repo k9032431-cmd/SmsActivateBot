@@ -45,6 +45,7 @@ def _fmt_time(ts: int) -> str:
 
 _CODE_NEAR = re.compile(r"(?:code|код|kod|pin|otp|verification)[^0-9A-Z]{0,40}([A-Z0-9-]{4,10})", re.I)
 _DIGITS = re.compile(r"(?<![\d.,])\d{4,8}(?![\d.,])")
+_YEAR = re.compile(r"(19|20)\d\d")
 
 
 def extract_code(subject: str, body: str) -> str | None:
@@ -53,10 +54,12 @@ def extract_code(subject: str, body: str) -> str | None:
         m = _CODE_NEAR.search(text)
         if m and any(ch.isdigit() for ch in m.group(1)):
             return m.group(1)
+    # Без слова «код»: сначала 5–8 цифр, затем 4 цифры, если это не похоже на год.
     for text in (subject, body):
-        m = _DIGITS.search(text)
-        if m:
-            return m.group(0)
+        found = _DIGITS.findall(text)
+        for num in sorted(found, key=lambda n: len(n) < 5):
+            if len(num) >= 5 or not _YEAR.fullmatch(num):
+                return num
     return None
 
 
