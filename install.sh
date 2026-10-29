@@ -130,6 +130,28 @@ if [ ! -f .env ]; then
     ask CRYPTOMUS_MERCHANT_ID "Cryptomus Merchant ID (необязательно)"
     ask CRYPTOMUS_API_KEY "Cryptomus Payment API key (необязательно)"
     ask PAYMENT_PROVIDER_TOKEN "Токен оплаты картой из @BotFather (необязательно)"
+else
+    # После обновления дописываем в .env новые настройки (пустыми, с комментариями).
+    # Существующие значения не трогаем.
+    venv/bin/python - <<'PY'
+import re
+env = open(".env", encoding="utf-8").read()
+have = set(re.findall(r"^([A-Z0-9_]+)=", env, flags=re.M))
+added, comments = [], []
+for line in open(".env.example", encoding="utf-8").read().splitlines():
+    if line.startswith("#"):
+        comments.append(line)
+        continue
+    m = re.match(r"^([A-Z0-9_]+)=", line)
+    if m and m.group(1) not in have:
+        added += comments + [line]
+    comments = [] if line.strip() == "" or m else comments
+if added:
+    with open(".env", "a", encoding="utf-8") as f:
+        f.write("\n# --- новые настройки (добавлены при обновлении) ---\n" + "\n".join(added) + "\n")
+    print("  + в .env добавлены новые настройки: " + ", ".join(
+        re.match(r"^([A-Z0-9_]+)=", l).group(1) for l in added if not l.startswith("#")))
+PY
 fi
 
 # ---------- 5. Команда smsbot и автозапуск ----------
