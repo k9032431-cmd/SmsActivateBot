@@ -32,8 +32,19 @@ if command -v apt-get >/dev/null 2>&1; then
         dpkg -s "$pkg" >/dev/null 2>&1 || need+=("$pkg")
     done
     if [ ${#need[@]} -gt 0 ]; then
-        apt-get update -qq
-        apt-get install -y -qq "${need[@]}" >/dev/null
+        if ! { apt-get update -qq && apt-get install -y -qq "${need[@]}" >/dev/null; }; then
+            # Региональные зеркала (ru.archive.ubuntu.com и т.п.) бывают недоступны — пробуем основное.
+            blue "▶ Зеркало пакетов недоступно, переключаюсь на основное зеркало Ubuntu/Debian…"
+            for f in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
+                [ -f "$f" ] || continue
+                cp -n "$f" "$f.bak-smsbot" 2>/dev/null || true
+                sed -i -E 's#https?://[a-z]{2}\.archive\.ubuntu\.com#http://archive.ubuntu.com#g;
+                           s#https?://mirror[^ ]*/ubuntu/?#http://archive.ubuntu.com/ubuntu/#g;
+                           s#https?://ftp\.[a-z]{2}\.debian\.org#http://deb.debian.org#g' "$f"
+            done
+            apt-get update -qq || die "Нет доступа к пакетам Ubuntu/Debian. Проверьте интернет на сервере: ping -c 3 8.8.8.8"
+            apt-get install -y -qq "${need[@]}" >/dev/null || die "Не удалось установить пакеты: ${need[*]}"
+        fi
     fi
 elif command -v dnf >/dev/null 2>&1; then
     dnf install -y -q git python3 python3-pip >/dev/null
